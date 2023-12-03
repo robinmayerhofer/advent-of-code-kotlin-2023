@@ -1,5 +1,3 @@
-import kotlin.properties.Delegates
-
 typealias Field = Array<CharArray>
 
 fun main() {
@@ -78,36 +76,9 @@ fun main() {
 
 
     fun NumberOnField.isPartNumber(field: Field): Boolean {
-        var rowToCheck by Delegates.notNull<Int>()
-        var columnToCheck by Delegates.notNull<Int>()
-
-        // check row above
-        rowToCheck = row - 1
-        if (row >= 0) {
-            for (columnToCheck in (columnRange.first-1..columnRange.last+1)) {
-                if (field.hasSymbolAt(rowToCheck, columnToCheck)) {
-                    return true
-                }
-            }
-        }
-
-        // check middle row
-        rowToCheck = row
-
-        columnToCheck = columnRange.first - 1
-        if (field.hasSymbolAt(rowToCheck, columnToCheck)) {
-            return true
-        }
-        columnToCheck = columnRange.last + 1
-        if (field.hasSymbolAt(rowToCheck, columnToCheck)) {
-            return true
-        }
-
-        // check row below
-        rowToCheck = row + 1
-        if (row >= 0) {
-            for (columnToCheck in (columnRange.first-1..columnRange.last+1)) {
-                if (field.hasSymbolAt(rowToCheck, columnToCheck)) {
+        for (r in row-1..row+1) {
+            for (c in columnRange.first-1..columnRange.last+1) {
+                if (field.hasSymbolAt(r, c)) {
                     return true
                 }
             }
@@ -165,7 +136,6 @@ fun main() {
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day03_test")
-    println(part1(testInput))
     check(part1(testInput) == 4361)
 
     val input = readInput("Day03")
