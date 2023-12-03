@@ -52,17 +52,17 @@ fun main() {
             !(this.isDigit() || this == '.')
 
     fun Field.hasSymbolAt(row: Int, column: Int): Boolean =
-        if (row < 0 || row >= size) {
-            false
-        } else if (column < 0 || column >= this[row].size) {
-            false
-        } else {
-            this[row][column].isSymbol()
-        }
+            if (row < 0 || row >= size) {
+                false
+            } else if (column < 0 || column >= this[row].size) {
+                false
+            } else {
+                this[row][column].isSymbol()
+            }
 
     fun NumberOnField.isPartNumber(field: Field): Boolean {
-        for (r in row-1..row+1) {
-            for (c in columnRange.first-1..columnRange.last+1) {
+        for (r in row - 1..row + 1) {
+            for (c in columnRange.first - 1..columnRange.last + 1) {
                 if (field.hasSymbolAt(r, c)) {
                     return true
                 }
@@ -97,18 +97,19 @@ fun main() {
         val numbers = inputToNumbersOnField(input)
         val potentialGears = inputToPotentialGearsOnField(input)
 
-        val gears: Collection<Gear> = potentialGears.mapNotNull { potentialGear ->
-            numbers
-                    .filter { it.isAdjacentTo(potentialGear) }
-                    .takeIf { it.size == 2 }
-                    ?.let { adjacentNumbers ->
-                        Gear(
-                                row = potentialGear.row,
-                                column = potentialGear.column,
-                                adjacentNumbers = Pair(adjacentNumbers[0], adjacentNumbers[1])
-                        )
-                    }
-        }
+        val gears: Collection<Gear> = potentialGears
+                .mapNotNull { potentialGear ->
+                    numbers
+                            .filter { it.isAdjacentTo(potentialGear) }
+                            .takeIf { it.size == 2 }
+                            ?.let { adjacentNumbers ->
+                                Gear(
+                                        row = potentialGear.row,
+                                        column = potentialGear.column,
+                                        adjacentNumbers = Pair(adjacentNumbers[0], adjacentNumbers[1])
+                                )
+                            }
+                }
 
         return gears.sumOf { it.gearRatio() }
     }
