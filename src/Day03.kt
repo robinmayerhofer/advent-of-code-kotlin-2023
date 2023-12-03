@@ -24,7 +24,20 @@ fun main() {
             val number: Int
     )
 
-    fun inputToNumberCoordinates(input: List<String>): List<NumberOnField> {
+    data class PotentialGearOnField(
+            val row: Int,
+            val column: Int
+    )
+
+    data class Gear(
+            val row: Int,
+            val column: Int,
+            val adjacentNumbers: Pair<NumberOnField, NumberOnField>,
+    ) {
+        fun gearRatio() = adjacentNumbers.first.number * adjacentNumbers.second.number
+    }
+
+    fun inputToNumbersOnField(input: List<String>): List<NumberOnField> {
         val regex = "(\\d+)".toRegex()
         return input.flatMapIndexed { row, line ->
             regex.findAll(line).map { result ->
@@ -33,6 +46,19 @@ fun main() {
                         columnRange = group.range,
                         row = row,
                         number = group.value.toInt(),
+                )
+            }
+        }
+    }
+
+    fun inputToPotentialGearsOnField(input: List<String>): List<PotentialGearOnField> {
+        val regex = "(\\*)".toRegex()
+        return input.flatMapIndexed { row, line ->
+            regex.findAll(line).map { result ->
+                val group = result.groups[0]!!
+                PotentialGearOnField(
+                        column = group.range.first,
+                        row = row,
                 )
             }
         }
@@ -87,24 +113,55 @@ fun main() {
             }
         }
 
-        println("Is not a part number: $this")
         return false
     }
 
     fun part1(input: List<String>): Int {
         val field = inputToField(input)
-        val numbers = inputToNumberCoordinates(input)
+        val numbers = inputToNumbersOnField(input)
 
         return numbers
                 .filter { it.isPartNumber(field) }
                 .sumOf(NumberOnField::number)
     }
 
-    fun part2(input: List<String>): Int =
-            input.sumOf {
-                it.length
-            }
+    fun NumberOnField.isAdjacentTo(potentialGear: PotentialGearOnField): Boolean {
+        if (row - 1 > potentialGear.row) {
+            return false
+        }
 
+        if (row + 1 < potentialGear.row) {
+            return false
+        }
+
+        // row is fine
+        // check column
+        if (potentialGear.column <= columnRange.last + 1 && potentialGear.column >= columnRange.first - 1) {
+            return true
+        }
+
+        return false
+    }
+
+    fun part2(input: List<String>): Int {
+        val numbers = inputToNumbersOnField(input)
+        val potentialGears = inputToPotentialGearsOnField(input)
+
+        val gears: Collection<Gear> = potentialGears.mapNotNull { potentialGear ->
+            numbers
+                    .filter { it.isAdjacentTo(potentialGear) }
+                    .takeIf { it.size == 2 }
+                    ?.let { adjacentNumbers ->
+                        Gear(
+                                row = potentialGear.row,
+                                column = potentialGear.column,
+                                adjacentNumbers = Pair(adjacentNumbers[0], adjacentNumbers[1])
+                        )
+                    }
+        }
+
+        return gears.sumOf { it.gearRatio() }
+    }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day03_test")
@@ -114,7 +171,6 @@ fun main() {
     val input = readInput("Day03")
     part1(input).println()
 
-//    val testInput2 = readInput("Day03_test02")
-//    check(part2(testInput2) == 1)
-//    part2(input).println()
+    check(part2(testInput) == 467835)
+    part2(input).println()
 }
