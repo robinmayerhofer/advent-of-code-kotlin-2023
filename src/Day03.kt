@@ -2,20 +2,6 @@ typealias Field = Array<CharArray>
 
 fun main() {
 
-    fun inputToField(input: List<String>): Array<CharArray> {
-        val rows = input.size
-        val columns = input.firstOrNull()?.length ?: 0
-
-        val field = Array(rows) { CharArray(columns) }
-
-        input.forEachIndexed { row, line ->
-            line.forEachIndexed { column, character ->
-                field[row][column] = character
-            }
-        }
-        return field
-    }
-
     data class NumberOnField(
             val row: Int,
             val columnRange: IntRange,
@@ -52,12 +38,12 @@ fun main() {
     fun inputToPotentialGearsOnField(input: List<String>): List<PotentialGearOnField> {
         val regex = "(\\*)".toRegex()
         return input.flatMapIndexed { row, line ->
-            regex.findAll(line).map { result ->
-                val group = result.groups[0]!!
-                PotentialGearOnField(
-                        column = group.range.first,
-                        row = row,
-                )
+            line.mapIndexedNotNull { index, char ->
+                if (char == '*') {
+                    PotentialGearOnField(row = row, column = index)
+                } else {
+                    null
+                }
             }
         }
     }
@@ -73,7 +59,6 @@ fun main() {
         } else {
             this[row][column].isSymbol()
         }
-
 
     fun NumberOnField.isPartNumber(field: Field): Boolean {
         for (r in row-1..row+1) {
@@ -97,21 +82,15 @@ fun main() {
     }
 
     fun NumberOnField.isAdjacentTo(potentialGear: PotentialGearOnField): Boolean {
-        if (row - 1 > potentialGear.row) {
+        if (row - 1 > potentialGear.row || row + 1 < potentialGear.row) {
             return false
         }
 
-        if (row + 1 < potentialGear.row) {
+        if (potentialGear.column > columnRange.last + 1 || potentialGear.column < columnRange.first - 1) {
             return false
         }
 
-        // row is fine
-        // check column
-        if (potentialGear.column <= columnRange.last + 1 && potentialGear.column >= columnRange.first - 1) {
-            return true
-        }
-
-        return false
+        return true
     }
 
     fun part2(input: List<String>): Int {
