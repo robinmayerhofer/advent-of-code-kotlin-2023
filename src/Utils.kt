@@ -1,7 +1,12 @@
 import java.math.BigInteger
 import java.security.MessageDigest
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
+import kotlin.time.TimeSource
+import kotlin.time.TimedValue
+import kotlin.time.measureTimedValue
 
 /**
  * Reads lines from the given input txt file.
@@ -32,4 +37,10 @@ fun inputToField(input: List<String>): Array<CharArray> {
         }
     }
     return field
+}
+
+inline fun <T> measure(block: () -> T): T {
+    val result = measureTimedValue(block)
+    println("Duration :${result.duration}")
+    return result.value
 }
