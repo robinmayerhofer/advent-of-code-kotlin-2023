@@ -1,4 +1,5 @@
 import kotlin.math.pow
+import kotlin.time.measureTime
 
 fun main() {
 
@@ -23,14 +24,14 @@ fun main() {
             }
 
     fun part2(input: List<String>): Int {
-        val amountOfGamesPerCard = input.mapIndexed { index, _ -> index to 1 }.toMap().toMutableMap()
+        val amountOfGamesPerCard = MutableList(input.size) { 1 }
 
         return input.mapIndexed { index, line ->
             val winAmount = findWinningNumbersSetSize(line)
-            val numberOfGamesCurrentCard = amountOfGamesPerCard[index]!!
+            val numberOfGamesCurrentCard = amountOfGamesPerCard[index]
 
             for (i in 1..winAmount) {
-                val numberOfGamesFutureCard = amountOfGamesPerCard[index + i] ?: continue
+                val numberOfGamesFutureCard = amountOfGamesPerCard[index + i]
                 amountOfGamesPerCard[index + i] = numberOfGamesFutureCard + numberOfGamesCurrentCard
             }
 
