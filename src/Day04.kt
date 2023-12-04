@@ -4,13 +4,17 @@ fun main() {
 
     val numberRegex = "(\\d+)".toRegex()
 
+    fun findWinningNumbersSetSize(line: String): Int {
+        val (winning, actual) = line.split(":")[1].split("|")
+        val winningSet = numberRegex.findAll(winning).map { it.groups.first()!!.value.toInt() }.toSet()
+        val actualSet = numberRegex.findAll(actual).map { it.groups.first()!!.value.toInt() }.toSet()
+
+        return winningSet.intersect(actualSet).size
+    }
+
     fun part1(input: List<String>): Int =
             input.sumOf { line ->
-                val (winning, actual) = line.split(":")[1].split("|")
-                val winningSet = numberRegex.findAll(winning).map { it.groups.first()!!.value.toInt() }.toSet()
-                val actualSet = numberRegex.findAll(actual).map { it.groups.first()!!.value.toInt() }.toSet()
-
-                val size = winningSet.intersect(actualSet).size
+                val size = findWinningNumbersSetSize(line)
                 if (size == 0) {
                     0
                 } else {
@@ -18,10 +22,21 @@ fun main() {
                 }
             }
 
-    fun part2(input: List<String>): Int =
-            input.sumOf {
-                it.length
+    fun part2(input: List<String>): Int {
+        val amountOfGamesPerCard = input.mapIndexed { index, _ -> index to 1 }.toMap().toMutableMap()
+
+        return input.mapIndexed { index, line ->
+            val winAmount = findWinningNumbersSetSize(line)
+            val numberOfGamesCurrentCard = amountOfGamesPerCard[index]!!
+
+            for (i in 1..winAmount) {
+                val numberOfGamesFutureCard = amountOfGamesPerCard[index + i] ?: continue
+                amountOfGamesPerCard[index + i] = numberOfGamesFutureCard + numberOfGamesCurrentCard
             }
+
+            numberOfGamesCurrentCard
+        }.sum()
+    }
 
 
     // test if implementation meets criteria from the description, like:
