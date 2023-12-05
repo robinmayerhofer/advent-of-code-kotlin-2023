@@ -25,44 +25,53 @@ fun main() {
             } ?: value
     }
 
-    fun part1(input: List<String>): Long {
-        val seeds = numberRegex.findAll(input[0].split(":")[1]).map { it.groups[0]!!.value.toLong() }.toList()
+    fun String.extractMap(): XtoYMap? = mapNameRegex.find(this)?.groups?.lastOrNull()?.let { group ->
+        XtoYMap(
+            name = group.value
+        )
+    }
+
+    fun String.extractRange(): RangeMapping? = rangesRegex.findAll(this).toList()
+        .takeIf { it.firstOrNull()?.groups?.size == 4 }
+        ?.let { matchResults ->
+            val matchResult = matchResults[0]
+            val destinationRangeStart = matchResult.groups[1]!!.value.toLong()
+            val sourceRangeStart = matchResult.groups[2]!!.value.toLong()
+            val length = matchResult.groups[3]!!.value.toLong()
+
+            RangeMapping(
+                sourceRange = LongRange(sourceRangeStart, sourceRangeStart + length - 1),
+                destinationRange = LongRange(destinationRangeStart, destinationRangeStart + length - 1),
+            )
+        }
+
+    fun List<String>.findAllMaps(): List<XtoYMap> {
+        val input = this
         val maps = mutableListOf<XtoYMap>()
 
         for (line in input.drop(1)) {
             if (line.isBlank()) continue
-
-            mapNameRegex.find(line)?.groups?.lastOrNull()?.let { group ->
-                maps.add(
-                    XtoYMap(
-                        name = group.value
-                    )
-                )
-            }
-
-            rangesRegex.findAll(line).toList()
-                .takeIf { it.firstOrNull()?.groups?.size == 4 }
-                ?.let { matchResults ->
-                    val matchResult = matchResults[0]
-                    val destinationRangeStart = matchResult.groups[1]!!.value.toLong()
-                    val sourceRangeStart = matchResult.groups[2]!!.value.toLong()
-                    val length = matchResult.groups[3]!!.value.toLong()
-
-                    maps.last().rangeMappings.add(
-                        RangeMapping(
-                            sourceRange = LongRange(sourceRangeStart, sourceRangeStart + length - 1),
-                            destinationRange = LongRange(destinationRangeStart, destinationRangeStart + length - 1),
-                        )
-                    )
-                }
+            line.extractMap()?.let(maps::add)
+            line.extractRange()?.let { maps.last().rangeMappings.add(it) }
         }
 
+        return maps
+    }
+
+    fun Long.traverseMaps(maps: List<XtoYMap>): Long {
+        var value = this
+        for (map in maps) {
+            value = map.mapValue(value)
+        }
+        return value
+    }
+
+    fun part1(input: List<String>): Long {
+        val seeds = numberRegex.findAll(input[0].split(":")[1]).map { it.groups[0]!!.value.toLong() }.toList()
+        val maps = input.findAllMaps()
+
         return seeds.minOf { seed ->
-            var value = seed
-            for (map in maps) {
-                value = map.mapValue(value)
-            }
-            value
+            seed.traverseMaps(maps)
         }
     }
 
@@ -71,7 +80,7 @@ fun main() {
         val seeds = mutableListOf<LongRange>()
         while (seedNumbers.isNotEmpty()) {
             seeds.add(
-                seedNumbers[0]..<seedNumbers[0] + seedNumbers[1]
+                seedNumbers[0]..< seedNumbers[0] + seedNumbers[1]
             )
             seedNumbers = seedNumbers.drop(2)
         }
@@ -79,44 +88,12 @@ fun main() {
         val seedCount = seeds.sumOf { it.count() }
         println("Seed count: $seedCount")
 
-        val maps = mutableListOf<XtoYMap>()
+        val maps = input.findAllMaps()
 
-        for (line in input.drop(1)) {
-            if (line.isBlank()) continue
-
-            mapNameRegex.find(line)?.groups?.lastOrNull()?.let { group ->
-                maps.add(
-                    XtoYMap(
-                        name = group.value
-                    )
-                )
-            }
-
-            rangesRegex.findAll(line).toList()
-                .takeIf { it.firstOrNull()?.groups?.size == 4 }
-                ?.let { matchResults ->
-                    val matchResult = matchResults[0]
-                    val destinationRangeStart = matchResult.groups[1]!!.value.toLong()
-                    val sourceRangeStart = matchResult.groups[2]!!.value.toLong()
-                    val length = matchResult.groups[3]!!.value.toLong()
-
-                    maps.last().rangeMappings.add(
-                        RangeMapping(
-                            sourceRange = LongRange(sourceRangeStart, sourceRangeStart + length - 1),
-                            destinationRange = LongRange(destinationRangeStart, destinationRangeStart + length - 1),
-                        )
-                    )
-                }
-        }
-        
         return seeds.asSequence().flatMap { it.asSequence() }
             .asStream().parallel()
             .map { seed ->
-                var value = seed
-                for (map in maps) {
-                    value = map.mapValue(value)
-                }
-                value!!
+                seed.traverseMaps(maps)
             }.min(Long::compareTo).get()
     }
 
@@ -129,7 +106,7 @@ fun main() {
     }
 
     val input = readInput("Day05")
-    part1(input).println()
+    measure { part1(input) }.println()
 
     val testOutput2 = part2(testInput)
     val expectedTestOutput2 = 46L
