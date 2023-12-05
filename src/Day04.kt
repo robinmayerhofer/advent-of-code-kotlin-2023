@@ -1,5 +1,4 @@
 import kotlin.math.pow
-import kotlin.time.measureTime
 
 fun main() {
 
