@@ -2,7 +2,6 @@ import kotlin.streams.asStream
 
 fun main() {
 
-    val numberRegex = "(\\d+)".toRegex()
     val mapNameRegex = "([a-z]+-to-[a-z]+) map:".toRegex()
     val rangesRegex = "(\\d+) (\\d+) (\\d+)".toRegex()
 
