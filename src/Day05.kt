@@ -67,7 +67,7 @@ fun main() {
     }
 
     fun part1(input: List<String>): Long {
-        val seeds = numberRegex.findAll(input[0].split(":")[1]).map { it.groups[0]!!.value.toLong() }.toList()
+        val seeds = input[0].split(":")[1].findAllNumbersLong()
         val maps = input.findAllMaps()
 
         return seeds.minOf { seed ->
@@ -76,7 +76,7 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        var seedNumbers = numberRegex.findAll(input[0].split(":")[1]).map { it.groups[0]!!.value.toLong() }.toList()
+        var seedNumbers = input[0].split(":")[1].findAllNumbersLong()
         val seeds = mutableListOf<LongRange>()
         while (seedNumbers.isNotEmpty()) {
             seeds.add(

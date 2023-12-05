@@ -40,3 +40,11 @@ inline fun <T> measure(block: () -> T): T {
     println("Duration :${result.duration}")
     return result.value
 }
+
+val numberRegex = "(\\d+)".toRegex()
+
+fun String.findAllNumbers(): List<Int> =
+    numberRegex.findAll(this).map { it.groups[0]!!.value.toInt() }.toList()
+
+fun String.findAllNumbersLong(): List<Long> =
+    numberRegex.findAll(this).map { it.groups[0]!!.value.toLong() }.toList()
