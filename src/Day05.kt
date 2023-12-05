@@ -1,3 +1,5 @@
+import kotlin.streams.asStream
+
 fun main() {
 
     val numberRegex = "(\\d+)".toRegex()
@@ -21,8 +23,6 @@ fun main() {
                     null
                 }
             } ?: value
-
-
     }
 
     fun part1(input: List<String>): Long {
@@ -108,17 +108,16 @@ fun main() {
                     )
                 }
         }
-
-        return seeds.asSequence().flatMap { it.asSequence() }.mapIndexed { index, seed ->
-            if (index % 10_000 == 0) {
-                println("Progress: ${(index.toDouble()/seedCount.toDouble() * 100)}%")
-            }
-            var value = seed
-            for (map in maps) {
-                value = map.mapValue(value)
-            }
-            value
-        }.min()
+        
+        return seeds.asSequence().flatMap { it.asSequence() }
+            .asStream().parallel()
+            .map { seed ->
+                var value = seed
+                for (map in maps) {
+                    value = map.mapValue(value)
+                }
+                value!!
+            }.min(Long::compareTo).get()
     }
 
     // test if implementation meets criteria from the description, like:
@@ -139,5 +138,5 @@ fun main() {
     }
     println("Test Part 2 passed")
     val input2 = readInput("Day05_2")
-    part2(input2).println()
+    measure { part2(input2) }.println()
 }
