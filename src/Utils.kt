@@ -37,7 +37,7 @@ fun inputToField(input: List<String>): Array<CharArray> {
 
 inline fun <T> measure(block: () -> T): T {
     val result = measureTimedValue(block)
-    println("Duration :${result.duration}")
+    println("Duration: ${result.duration}")
     return result.value
 }
 
