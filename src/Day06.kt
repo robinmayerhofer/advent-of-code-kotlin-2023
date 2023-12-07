@@ -1,6 +1,3 @@
-import kotlin.coroutines.EmptyCoroutineContext.fold
-import kotlin.text.Typography.times
-
 fun main() {
 
     fun waysToSolve(time: Long, distance: Long): Int =
