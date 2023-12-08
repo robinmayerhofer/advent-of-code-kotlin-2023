@@ -48,3 +48,18 @@ fun String.findAllNumbers(): List<Int> =
 
 fun String.findAllNumbersLong(): List<Long> =
     numberRegex.findAll(this).map { it.groups[0]!!.value.toLong() }.toList()
+
+fun gcd(a: Long, b: Long): Long {
+    var a = a
+    var b = b
+    while (b > 0) {
+        val temp = b
+        b = a % b // % is remainder
+        a = temp
+    }
+    return a
+}
+
+fun lcm(a: Long, b: Long): Long {
+    return a * (b / gcd(a, b))
+}
