@@ -1,6 +1,6 @@
 fun main() {
 
-    fun predict(line: String): Int {
+    fun buildHierarchy(line: String): List<List<Int>> {
         val numbers = line.findAllNumbers()
         val hierarchy = mutableListOf(numbers)
 
@@ -10,11 +10,19 @@ fun main() {
                     .map { (a, b) -> a - b }
             hierarchy.add(next)
         }
+        return hierarchy
+    }
 
+    fun predict(line: String, atEnd: Boolean = true): Int {
+        val hierarchy = buildHierarchy(line)
 
         var addedPreviousLine = 0
         for (hierarchyLine in hierarchy.dropLast(1).reversed()) {
-            addedPreviousLine += hierarchyLine.lastOrNull() ?: 0
+            if (atEnd) {
+                addedPreviousLine += hierarchyLine.lastOrNull() ?: 0
+            } else {
+                addedPreviousLine = (hierarchyLine.firstOrNull() ?: 0) - addedPreviousLine
+            }
         }
 
         return addedPreviousLine
@@ -27,7 +35,7 @@ fun main() {
 
     fun part2(input: List<String>): Int =
             input.sumOf {
-                it.length
+                predict(it, atEnd = false)
             }
 
 
@@ -40,22 +48,11 @@ fun main() {
     }
     println("Part 1 Tests passed")
 
-    predict("-1 -2 -4 -8").println()
-
     val input = readInput("Day09").filter(String::isNotBlank)
     val output = part1(input)
-    check(output != 1725996962) {
-        error("Part 1 too high ($output)")
-    }
     output.println()
 
-//    val testInput2 = readInput("Day09_test2").filter(String::isNotBlank)
-//    val testOutput2 = part2(testInput2)
-//    val expectedTestOutput2 = 1
-//    check(testOutput2 == expectedTestOutput2) {
-//        "Part 2 Tests: Expected $expectedTestOutput2, got $testOutput2"
-//    }
-//
-//    val input2 = readInput("Day09_2").filter(String::isNotBlank)
-//    part2(input2).println()
+    val t2 = predict("10  13  16  21  30  45", atEnd = false)
+    check(t2 == 5) { "Part2 T1 failed, got $t2"}
+    part2(input).println()
 }
