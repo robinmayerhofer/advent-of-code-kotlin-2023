@@ -2,12 +2,15 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 import kotlin.time.measureTimedValue
 
 /**
  * Reads lines from the given input txt file.
  */
 fun readInput(name: String) = Path("src/$name.txt").readLines()
+
+fun writeOutput(name: String, lines: Iterable<CharSequence>) = Path("src/$name.txt").writeLines(lines)
 
 /**
  * Converts string to md5 hash.
