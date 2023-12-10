@@ -41,10 +41,12 @@ data class Pipe(
             'J' -> Pipe(char, NORTH, WEST) // is a 90-degree bend connecting north and west.
             '7' -> Pipe(char, SOUTH, WEST) // is a 90-degree bend connecting south and west.
             'F' -> Pipe(char, SOUTH, EAST) // is a 90-degree bend connecting south and east.
-            '.' -> Pipe(char, NONE, NONE) // is ground; there is no pipe in this tile.
+            ground.backingChar -> ground // is ground; there is no pipe in this tile.
             'S' -> Pipe(char, ALL, ALL) // is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
             else -> error("Unexpected char '$char'.")
         }
+
+        val ground =  Pipe('.', NONE, NONE)
     }
 
     fun isStart() = backingChar == 'S'
@@ -125,13 +127,19 @@ fun main() {
 
     fun PipeField.next(
             currentTravelStep: TravelStep,
+            forcedDirection: Direction? = null,
     ): TravelStep? {
+        if (forcedDirection != null) {
+            check(elementAt(currentTravelStep.currentPosition).isStart()) {
+                "Forcing a direction is only allowed at the start tile"
+            }
+        }
         val currentPosition = currentTravelStep.currentPosition
         val havingCameFrom = currentTravelStep.havingCameFrom
 
         val currentPipe = elementAt(currentPosition)
 
-        val nextDirection = if (currentPipe.from == havingCameFrom) {
+        val nextDirection = forcedDirection ?: if (currentPipe.from == havingCameFrom) {
             currentPipe.to
         } else if (currentPipe.to == havingCameFrom) {
             currentPipe.from
@@ -153,50 +161,47 @@ fun main() {
                 }
     }
 
-    fun part1(input: List<String>): Int {
-        val field = inputToPipeField(input)
-        val start: Position = field.findStart()
+    // Open loop (first step position != last step position)
+    fun PipeField.findLoop(): List<TravelStep> {
+        val start: Position = findStart()
 
-        val loopLength: Int = listOf(NORTH, EAST, SOUTH, WEST).firstNotNullOfOrNull { startDirection ->
+        return listOf(NORTH, EAST, SOUTH, WEST).firstNotNullOfOrNull { startDirection ->
             val newPosition: Position = start.travel(direction = startDirection)
             var nextTravelStep = TravelStep(
                     currentPosition = newPosition,
                     havingCameFrom = startDirection.inverse(),
             )
-            if (!field.isValidPosition(nextTravelStep.currentPosition) ||
-                    !field.isValidTravelStep(nextTravelStep)) {
+            if (!isValidPosition(nextTravelStep.currentPosition) ||
+                    !isValidTravelStep(nextTravelStep)) {
                 return@firstNotNullOfOrNull null
             }
 
-            var length = 1
-            var currentTravelStep: TravelStep
+            var currentTravelStep: TravelStep = nextTravelStep
             val travelSteps = mutableListOf(nextTravelStep)
-            while (true) {
-                currentTravelStep = nextTravelStep
-                if (field.elementAt(currentTravelStep.currentPosition).isStart()) {
-                    println("Found loop length $length")
-                    // println("Found loop length $length: $travelSteps")
-                    return@firstNotNullOfOrNull length
-                }
-                nextTravelStep = field.next(currentTravelStep) ?: return@firstNotNullOfOrNull null
+            while (!elementAt(travelSteps.last().currentPosition).isStart()) {
+                nextTravelStep = next(currentTravelStep) ?: return@firstNotNullOfOrNull null
                 travelSteps.add(nextTravelStep)
-                length += 1
-
+                currentTravelStep = nextTravelStep
             }
-            error("Goodbye")
+            travelSteps
         } ?: error("Found no loop")
+    }
+
+    fun part1(input: List<String>): Int {
+        val field = inputToPipeField(input)
+
+        val loopFields: Int = field.findLoop().count()
 
         return ceil(
-                (loopLength.toDouble() / 2.0)
+                (loopFields.toDouble() / 2.0)
         ).toInt()
     }
 
     fun PipeField.writeOutput(name: String) = writeOutput(
             name,
             map {
-                it.map {
-//                    it.backingChar
-                    when (it.floodFillColor) {
+                it.map { pipe ->
+                    when (pipe.floodFillColor) {
                         0 -> '█'
                         1 -> '-'
                         else -> ' '
@@ -212,7 +217,7 @@ fun main() {
 
         val newField: Array<Array<Pipe>> = Array(size = rows * 3) {
             Array(size = columns * 3) {
-                Pipe(backingChar = '.', NONE, NONE)
+                Pipe.ground
             }
         }
 
@@ -248,47 +253,39 @@ fun main() {
     }
 
     fun Position.directionTo(other: Position): Direction =
-            if (row < other.row) {
-                SOUTH
-            } else if (row > other.row) {
-                NORTH
-            } else if (column < other.column) {
-                EAST
-            } else if (column > other.column) {
-                WEST
-            } else {
-                error("This should not happen.")
-            }
+            if (row < other.row) SOUTH
+            else if (row > other.row) NORTH
+            else if (column < other.column) EAST
+            else if (column > other.column) WEST
+            else error("This should not happen.")
 
-    fun stepsEnclosedBy(field: PipeField, loop: List<TravelStep>): Int {
-        val rows = field.size
-        val columns = field[0].size
-        val totalSize = rows * columns
-
+    fun PipeField.replaceAllNoneLoopFields(loop: List<TravelStep>) {
         val positionsWithLoopPipes = loop.map { it.currentPosition }.toMutableSet()
 
-        field.forEachIndexed { row, pipeRow ->
+        this.forEachIndexed { row, pipeRow ->
             pipeRow.forEachIndexed { column, pipe ->
                 val position = Position(column = column, row = row)
                 if (position !in positionsWithLoopPipes) {
-                    field[row][column] = Pipe('.', NONE, NONE)
+                    this[row][column] = Pipe.ground
                 } else {
-                    field[row][column] = pipe.copy(floodFillColor = 0)
+                    this[row][column] = pipe.copy(floodFillColor = 0)
                 }
             }
         }
+    }
 
-        val startPosition = field.findStart()
+    fun PipeField.assignDirectionsToStartField(loop: List<TravelStep>) {
+        val startPosition = findStart()
         val startTravelablePositions = listOf(
                 startPosition.travel(NORTH),
                 startPosition.travel(EAST),
                 startPosition.travel(SOUTH),
                 startPosition.travel(WEST),
-        ).filter(field::isValidPosition)
+        ).filter(::isValidPosition)
 
         val startPipeNeighbors = loop.mapNotNull { travelStep ->
             val position = travelStep.currentPosition
-            val pipe = field.elementAt(position)
+            val pipe = elementAt(position)
 
             if (position in startTravelablePositions && (startPosition == position.travel(pipe.from) || startPosition == position.travel(pipe.to))) {
                 position
@@ -299,18 +296,18 @@ fun main() {
             check(it.size == 2)
         }.take(2)
 
-        field.setElementAt(startPosition, element = field.elementAt(startPosition)
+        setElementAt(startPosition, element = elementAt(startPosition)
                 .copy(
                         from = startPosition.directionTo(startPipeNeighbors[0]),
-                        to = startPosition.directionTo(startPipeNeighbors[1]))
+                        to = startPosition.directionTo(startPipeNeighbors[1])
+                )
         )
-        println("Start: $startPosition => ${field.elementAt(startPosition)}")
+    }
 
-        field.writeOutput("Day10_01_output_only_loop")
-        val explodedField = field.explodeByThree()
-        val explodedRows = explodedField.size
-        val explodedColumns = explodedField[0].size
-        explodedField.writeOutput("Day10_02_output_exploded_field")
+    fun PipeField.floodFill() {
+        val explodedRows = size
+        val explodedColumns = this[0].size
+        writeOutput("Day10_02_output_exploded_field")
 
         val positionsToTry = mutableSetOf<Position>()
 
@@ -325,21 +322,19 @@ fun main() {
         }
 
         while (positionsToTry.isNotEmpty()) {
-//            println("Total Size $totalSize / to try: ${positionsToTry.count()}")
-
             val positionToTry = positionsToTry.first()
             positionsToTry.remove(positionToTry)
 
-            if (!explodedField.isValidPosition(positionToTry)) {
+            if (!isValidPosition(positionToTry)) {
                 continue
             }
 
-            val pipe = explodedField.elementAt(positionToTry)
+            val pipe = elementAt(positionToTry)
             if (pipe.floodFillColor != null) {
                 continue
             }
 
-            explodedField.setElementAt(
+            setElementAt(
                     positionToTry,
                     pipe.copy(floodFillColor = 1)
             )
@@ -352,52 +347,35 @@ fun main() {
             )
 
             positionsToTry.addAll(positionsToAdd)
-
         }
-        explodedField.writeOutput("Day10_03_output_exploded_after_floodfill")
-
-
-        val unexplodedField: PipeField = explodedField
-                .filterIndexed { row, _ -> row % 3 == 0 }
-                .map {
-                    it.filterIndexed { column, _ -> column % 3 == 0 }.toTypedArray()
-                }.toTypedArray()
-
-        unexplodedField.writeOutput("Day10_04_output_normal_after_floodfill")
-
-        return unexplodedField.sumOf { it.count { it.floodFillColor == null } }
     }
+
+    fun PipeField.undoExplosionByThree(): PipeField =
+            this
+                    .filterIndexed { row, _ -> row % 3 == 0 }
+                    .map {
+                        it.filterIndexed { column, _ -> column % 3 == 0 }.toTypedArray()
+                    }.toTypedArray()
+
+    fun PipeField.countUncolored(): Int =
+            this.sumOf { row -> row.count { it.floodFillColor == null } }
 
     fun part2(input: List<String>): Int {
         val field = inputToPipeField(input)
-        val start: Position = field.findStart()
+        val loop: List<TravelStep> = field.findLoop()
 
-        val loop: List<TravelStep> = listOf(NORTH, EAST, SOUTH, WEST).firstNotNullOfOrNull { startDirection ->
-            val newPosition: Position = start.travel(direction = startDirection)
-            var nextTravelStep = TravelStep(
-                    currentPosition = newPosition,
-                    havingCameFrom = startDirection.inverse(),
-            )
-            if (!field.isValidPosition(nextTravelStep.currentPosition) ||
-                    !field.isValidTravelStep(nextTravelStep)) {
-                return@firstNotNullOfOrNull null
-            }
+        field.replaceAllNoneLoopFields(loop)
+        field.assignDirectionsToStartField(loop)
+        field.writeOutput("Day10_01_output_only_loop")
 
-            var currentTravelStep: TravelStep
-            val travelSteps = mutableListOf(nextTravelStep)
-            while (true) {
-                currentTravelStep = nextTravelStep
-                if (field.elementAt(currentTravelStep.currentPosition).isStart()) {
-                    println("Found loop length ${travelSteps.size}")
-                    return@firstNotNullOfOrNull travelSteps
-                }
-                nextTravelStep = field.next(currentTravelStep) ?: return@firstNotNullOfOrNull null
-                travelSteps.add(nextTravelStep)
-            }
-            error("Goodbye")
-        } ?: error("Found no loop")
+        val explodedField = field.explodeByThree()
+        explodedField.floodFill()
+        explodedField.writeOutput("Day10_03_output_exploded_after_floodfill")
 
-        return stepsEnclosedBy(field, loop)
+        val unexplodedField = explodedField.undoExplosionByThree()
+        unexplodedField.writeOutput("Day10_04_output_normal_after_floodfill")
+
+        return unexplodedField.countUncolored()
     }
 
     // test if implementation meets criteria from the description, like:
@@ -431,15 +409,15 @@ fun main() {
         }
     }
 
-//    `test part 1 simple loop`()
-//    `test part 1 complex loop`()
-//
-//    val input = readInput("Day10").filter(String::isNotBlank)
-//    val part1Result = part1(input)
-//    check(part1Result > 4831) {
-//        "Part 1 too low ($part1Result should be greater than 4831)"
-//    }
-//    part1Result.println()
+    `test part 1 simple loop`()
+    `test part 1 complex loop`()
+
+    val input = readInput("Day10").filter(String::isNotBlank)
+    val part1Result = part1(input)
+    check(part1Result > 4831) {
+        "Part 1 too low ($part1Result should be greater than 4831)"
+    }
+    part1Result.println()
 
     fun `test part 2 example 1`() {
         val testInput = """
