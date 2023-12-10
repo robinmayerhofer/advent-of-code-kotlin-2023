@@ -66,3 +66,16 @@ fun gcd(a: Long, b: Long): Long {
 fun lcm(a: Long, b: Long): Long {
     return a * (b / gcd(a, b))
 }
+
+fun <T> test(
+        testName: String,
+        fileName: String,
+        execute: (List<String>) -> T,
+        expectedValue: T,
+) {
+    val testInput = readInput(fileName).filter(String::isNotBlank)
+    val testOutput = execute(testInput)
+    check(testOutput == expectedValue) {
+        "$testName: Expected '$expectedValue', got '$testOutput'."
+    }
+}
