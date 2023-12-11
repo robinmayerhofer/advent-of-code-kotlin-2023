@@ -38,9 +38,8 @@ fun main() {
         return Pair(verticalIndicesToExpand, horizontalIndicesToExpand)
     }
 
-    fun part1(input: List<String>): Int {
-        val universe = expandUniverse(input)
-        val galaxies: Set<Pair<Int, Int>> = universe.flatMapIndexed { row: Int, line: String ->
+    fun findGalaxies(universe: List<String>): Set<Pair<Int, Int>> =
+        universe.flatMapIndexed { row: Int, line: String ->
             line.mapIndexedNotNull { column, c ->
                 if (c == '#') {
                     row to column
@@ -49,6 +48,10 @@ fun main() {
                 }
             }
         }.toSet()
+
+    fun part1(input: List<String>): Int {
+        val universe = expandUniverse(input)
+        val galaxies: Set<Pair<Int, Int>> = findGalaxies(universe)
 
         return galaxies.flatMapIndexed { i1, (y1, x1) ->
             galaxies.mapIndexed { i2, (y2, x2) ->
@@ -68,15 +71,7 @@ fun main() {
     fun part2(input: List<String>, expansionFactor: Long): Long {
         val universe = input
         val (verticalIndicesToExpand, horizontalIndicesToExpand) = expandUniverse2(input)
-        val galaxies: Set<Pair<Int, Int>> = universe.flatMapIndexed { row: Int, line: String ->
-            line.mapIndexedNotNull { column, c ->
-                if (c == '#') {
-                    row to column
-                } else {
-                    null
-                }
-            }
-        }.toSet()
+        val galaxies: Set<Pair<Int, Int>> = findGalaxies(universe)
 
         return galaxies.flatMapIndexed { i1, (y1, x1) ->
             galaxies.mapIndexed { i2, (y2, x2) ->
@@ -119,5 +114,5 @@ fun main() {
             8410L,
     )
     val input2 = readInput("Day11").filter(String::isNotBlank)
-    part2(input2, 1_000_000L).println()
+    measure { part2(input2, 1_000_000L) }.println()
 }
