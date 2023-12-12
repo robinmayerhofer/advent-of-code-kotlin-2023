@@ -91,7 +91,7 @@ fun main() {
         }.sum()
     }
 
-    test(
+    testFile(
             "Part 1 Test 1",
             "Day11_test",
             ::part1,
@@ -101,13 +101,13 @@ fun main() {
     val input = readInput("Day11").filter(String::isNotBlank)
     part1(input).println()
 
-    test(
+    testFile(
             "Part 2 Test with expansion factor 10",
             "Day11_test",
             { input -> part2(input, 10L) },
             1030L,
     )
-    test(
+    testFile(
             "Part 2 Test with expansion factor 10",
             "Day11_test",
             { input -> part2(input, 100L) },
