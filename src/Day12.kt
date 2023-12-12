@@ -51,7 +51,11 @@ private fun solutions(chars: Configuration, requirements: Requirements): Long {
     return when (chars.first()) {
         OPERATIONAL -> solutions(chars.drop(1), requirements)
         DAMAGED -> advanceRequirements(chars, requirements).also { memory[requirements to chars] = it }
-        UNKKNOWN -> solutions(chars.drop(1), requirements) + advanceRequirements(chars, requirements).also { memory[requirements to chars] = it }
+        UNKKNOWN -> solutions(chars.drop(1), requirements) + advanceRequirements(
+            chars,
+            requirements
+        ).also { memory[requirements to chars] = it }
+
         else -> error("Invalid input")
     }
 }
@@ -59,33 +63,28 @@ private fun solutions(chars: Configuration, requirements: Requirements): Long {
 
 fun main() {
 
-    fun parseLine(line: String): Pair<Configuration, Requirements> {
-        val (configuration, requirements) = line.split(" ")
-
-        return configuration.toList() to requirements.findAllNumbers()
-    }
-
     fun part1(input: List<String>): Long {
-        memory.clear()
         return input.sumOf { line ->
-            val (config, req) = parseLine(line)
-            solutions(config, req)
+            val (configuration, requirements) = line.split(" ")
+
+            solutions(
+                configuration.toList(),
+                requirements.findAllNumbers(),
+            )
         }
     }
 
     fun part2(input: List<String>): Long {
-        memory.clear()
-
         return input.sumOf { line ->
-            val (config, requirements) = parseLine(line)
+            val (config, requirements) = line.split(" ")
 
-            val unfoldedConfig = (0..<5).joinToString("?") { config.joinToString("") }.toList()
-            val unfoldedRequirements = listOf(requirements, requirements, requirements, requirements, requirements).flatten()
+            val unfoldedConfig = (0..<5).joinToString("?") { config }.toList()
+            val unfoldedRequirements = (0..<5).joinToString(",") { requirements }.findAllNumbers()
             solutions(
                 unfoldedConfig,
                 unfoldedRequirements,
             ).also {
-                "$it solutions for ${unfoldedConfig.joinToString("")} ${unfoldedRequirements.joinToString(",")}".println()
+//                "$it solutions for ${unfoldedConfig.joinToString("")} ${unfoldedRequirements.joinToString(",")}".println()
             }
         }
     }
@@ -137,6 +136,7 @@ fun main() {
 
     testsPart1()
     val input = readInput("Day12").filter(String::isNotBlank)
+    memory.clear()
     part1(input).println()
 
     fun testsPart2() {
@@ -187,6 +187,7 @@ fun main() {
     testsPart2()
     val input2 = readInput("Day12").filter(String::isNotBlank)
 
-    part2(input2)
+    memory.clear()
+    measure { part2(input2) }
         .println()
 }
