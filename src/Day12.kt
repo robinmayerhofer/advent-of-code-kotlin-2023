@@ -1,15 +1,13 @@
 typealias Configuration = List<Char>
 typealias Requirements = List<Int>
 
-private val OPERATIONAL = '.'
-private val DAMAGED = '#'
-private val UNKKNOWN = '?'
+private const val OPERATIONAL = '.'
+private const val DAMAGED = '#'
+private const val UNKKNOWN = '?'
 
-val memory = mutableMapOf<Pair<Requirements, Configuration>, Long>()
+val memAdvanceRequirements = mutableMapOf<Pair<Requirements, Configuration>, Long>()
 
 private fun advanceRequirements(chars: Configuration, requirements: Requirements): Long {
-    memory[requirements to chars]?.let { return it }
-
     if (requirements.isEmpty()) {
         return 0
     }
@@ -50,11 +48,8 @@ private fun solutions(chars: Configuration, requirements: Requirements): Long {
 
     return when (chars.first()) {
         OPERATIONAL -> solutions(chars.drop(1), requirements)
-        DAMAGED -> advanceRequirements(chars, requirements).also { memory[requirements to chars] = it }
-        UNKKNOWN -> solutions(chars.drop(1), requirements) + advanceRequirements(
-            chars,
-            requirements
-        ).also { memory[requirements to chars] = it }
+        DAMAGED -> memAdvanceRequirements.getOrPut(requirements to chars) { advanceRequirements(chars, requirements) }
+        UNKKNOWN -> solutions(chars.drop(1), requirements) + memAdvanceRequirements.getOrPut(requirements to chars) { advanceRequirements(chars, requirements) }
 
         else -> error("Invalid input")
     }
@@ -136,7 +131,7 @@ fun main() {
 
     testsPart1()
     val input = readInput("Day12").filter(String::isNotBlank)
-    memory.clear()
+    memAdvanceRequirements.clear()
     part1(input).println()
 
     fun testsPart2() {
@@ -187,7 +182,7 @@ fun main() {
     testsPart2()
     val input2 = readInput("Day12").filter(String::isNotBlank)
 
-    memory.clear()
+    memAdvanceRequirements.clear()
     measure { part2(input2) }
         .println()
 }
