@@ -72,8 +72,17 @@ fun <T> testFile(
     fileName: String,
     execute: (List<String>) -> T,
     expectedValue: T,
+    filterBlank: Boolean = true
 ) {
-    val testInput = readInput(fileName).filter(String::isNotBlank)
+    val testInput = readInput(fileName)
+        .let {
+            if (filterBlank) {
+                it.filter(String::isNotBlank)
+            } else {
+                it
+            }
+        }
+
     val testOutput = execute(testInput)
     check(testOutput == expectedValue) {
         "$testName: Expected '$expectedValue', got '$testOutput'."
