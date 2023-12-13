@@ -24,7 +24,9 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  */
 fun Any?.println() = println(this)
 
-fun inputToField(input: List<String>): Array<CharArray> {
+typealias Field = Array<CharArray>
+
+fun inputToField(input: List<String>): Field {
     val rows = input.size
     val columns = input.firstOrNull()?.length ?: 0
 
@@ -37,6 +39,12 @@ fun inputToField(input: List<String>): Array<CharArray> {
     }
     return field
 }
+
+
+fun Field.println() {
+    println(this.joinToString("\n") { it.joinToString("") })
+}
+
 
 inline fun <T> measure(block: () -> T): T {
     val result = measureTimedValue(block)
@@ -99,5 +107,15 @@ fun <T> test(
     val testOutput = execute(testInput)
     check(testOutput == expectedValue) {
         "$testName: Expected '$expectedValue', got '$testOutput'."
+    }
+}
+
+inline fun transpose(xs: Array<CharArray>): Array<CharArray> {
+    val cols = xs[0].size
+    val rows = xs.size
+    return Array(cols) { j ->
+        CharArray(rows) { i ->
+            xs[i][j]
+        }
     }
 }

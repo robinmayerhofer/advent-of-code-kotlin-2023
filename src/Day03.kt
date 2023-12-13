@@ -1,5 +1,3 @@
-typealias Field = Array<CharArray>
-
 fun main() {
 
     data class NumberOnField(
