@@ -119,3 +119,15 @@ inline fun transpose(xs: Array<CharArray>): Array<CharArray> {
         }
     }
 }
+
+
+inline fun rotate90CounterClockwise(field: Field): Field {
+    val ys = field.size
+    val xs = field[0].size
+
+    return Array(xs) { x ->
+        CharArray(ys) { y ->
+            field[ys - y - 1][x]
+        }
+    }
+}
