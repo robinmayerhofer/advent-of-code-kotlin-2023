@@ -89,13 +89,13 @@ fun main() {
             indexToField.add(field.copy())
 
             field.tiltNorth() // NORTH
-            field = rotate90CounterClockwise(field)
+            field = rotate90(field)
             field.tiltNorth() // WEST
-            field = rotate90CounterClockwise(field)
+            field = rotate90(field)
             field.tiltNorth() // SOUTH
-            field = rotate90CounterClockwise(field)
+            field = rotate90(field)
             field.tiltNorth() // EAST
-            field = rotate90CounterClockwise(field)
+            field = rotate90(field)
         }
 
         return field.calculateLoad()

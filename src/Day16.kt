@@ -1,13 +1,13 @@
 fun main() {
 
-    fun part1(input: List<String>): Int =
+    fun part1(input: List<String>): Long =
             input.sumOf {
-                it.length
+                it.length.toLong()
             }
 
-    fun part2(input: List<String>): Int =
+    fun part2(input: List<String>): Long =
             input.sumOf {
-                it.length
+                it.length.toLong()
             }
 
     testFile(

@@ -110,7 +110,12 @@ fun <T> test(
     }
 }
 
-inline fun transpose(xs: Array<CharArray>): Array<CharArray> {
+/**
+ * 1 2 3    1 4 7
+ * 4 5 6 => 2 5 8
+ * 7 8 9    3 6 9
+ */
+fun transpose(xs: Array<CharArray>): Array<CharArray> {
     val cols = xs[0].size
     val rows = xs.size
     return Array(cols) { j ->
@@ -120,8 +125,28 @@ inline fun transpose(xs: Array<CharArray>): Array<CharArray> {
     }
 }
 
+/**
+ * 1 2 3    3 6 9
+ * 4 5 6 => 2 5 8
+ * 7 8 9    1 4 7
+ */
+fun rotateMinus90(field: Field): Field {
+    val ys = field.size
+    val xs = field[0].size
 
-inline fun rotate90CounterClockwise(field: Field): Field {
+    return Array(xs) { x ->
+        CharArray(ys) { y ->
+            field[y][xs - x - 1]
+        }
+    }
+}
+
+/**
+ * 1 2 3    7 4 1
+ * 4 5 6 => 8 5 2
+ * 7 8 9    9 6 3
+ */
+fun rotate90(field: Field): Field {
     val ys = field.size
     val xs = field[0].size
 
