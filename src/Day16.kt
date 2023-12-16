@@ -1,7 +1,7 @@
-import TravelingDirection.*
-import java.util.*
 
-enum class TravelingDirection {
+import TravelingDirection.*
+
+private enum class TravelingDirection {
     UPWARDS,
     DOWNWARDS,
     TO_RIGHT,
@@ -38,11 +38,11 @@ enum class TravelingDirection {
 
 }
 
-const val EMPTY_SPACE = '.'
-const val SPLITTER_WHEN_HORIZONTALLY_TRAVELLING = '|'
-const val SPLITTER_WHEN_VERTICALLY_TRAVELLING = '-'
-const val DIRECTING_SPLITTER_A = '/'
-const val DIRECTING_SPLITTER_B = '\\'
+private const val EMPTY_SPACE = '.'
+private const val SPLITTER_WHEN_HORIZONTALLY_TRAVELLING = '|'
+private const val SPLITTER_WHEN_VERTICALLY_TRAVELLING = '-'
+private const val DIRECTING_SPLITTER_A = '/'
+private const val DIRECTING_SPLITTER_B = '\\'
 
 fun main() {
 
@@ -71,7 +71,7 @@ fun main() {
     fun Field.elementAt(position: Position): Char =
             elementAt(row = position.row, column = position.column)
 
-    fun Field.shootBeam(queue: LinkedList<Pair<Position, TravelingDirection>>,
+    fun Field.shootBeam(queue: ArrayDeque<Pair<Position, TravelingDirection>>,
                         cache: MutableSet<Pair<Position, TravelingDirection>>,
                         currentPosition: Position,
                         direction: TravelingDirection,
@@ -111,14 +111,14 @@ fun main() {
     }
 
     fun findNumberOfEnergizedTiles(field: Field, startingPosition: Position, startingDirection: TravelingDirection): Int {
-        val queue = LinkedList<Pair<Position, TravelingDirection>>()
+        val queue = ArrayDeque<Pair<Position, TravelingDirection>>()
         val cache = mutableSetOf<Pair<Position, TravelingDirection>>()
 
         val allVisitedPositions = mutableSetOf<Position>()
         queue.add(startingPosition to startingDirection)
 
         while (queue.isNotEmpty()) {
-            val (position, direction) = queue.pop()
+            val (position, direction) = queue.removeLast()
             field.shootBeam(queue, cache, position, direction, allVisitedPositions)
         }
 
@@ -128,7 +128,7 @@ fun main() {
 
     fun part1(input: List<String>): Int {
         val field = inputToField(input)
-        return findNumberOfEnergizedTiles(field, Position(column = 0, row = 0), TO_RIGHT,)
+        return findNumberOfEnergizedTiles(field, Position(column = 0, row = 0), TO_RIGHT)
     }
 
     fun part2(input: List<String>): Int {
