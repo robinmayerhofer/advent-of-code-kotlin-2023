@@ -1,7 +1,7 @@
 import Direction.*
 import kotlin.math.ceil
 
-enum class Direction {
+private enum class Direction {
     NORTH,
     EAST,
     SOUTH,
@@ -22,12 +22,12 @@ enum class Direction {
 
 data class Position(val column: Int, val row: Int)
 
-data class TravelStep(
+private data class TravelStep(
         val currentPosition: Position,
         val havingCameFrom: Direction,
 )
 
-data class Pipe(
+private data class Pipe(
         val backingChar: Char,
         val from: Direction,
         val to: Direction,
@@ -52,7 +52,7 @@ data class Pipe(
     fun isStart() = backingChar == 'S'
 }
 
-typealias PipeField = Array<Array<Pipe>>
+private typealias PipeField = Array<Array<Pipe>>
 
 fun main() {
 

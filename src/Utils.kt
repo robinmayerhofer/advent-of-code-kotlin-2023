@@ -40,6 +40,38 @@ fun inputToField(input: List<String>): Field {
     return field
 }
 
+typealias DigitField = Array<IntArray>
+
+fun DigitField.elementAt(row: Int, column: Int): Int =
+    this[row][column]
+
+fun DigitField.elementAt(position: Position): Int =
+    elementAt(row = position.row, column = position.column)
+
+fun DigitField.isValidPosition(position: Position): Boolean =
+    if (position.column < 0 || position.row < 0) {
+        false
+    } else if (position.column >= this[0].size || position.row >= this.size) {
+        false
+    } else {
+        true
+    }
+
+
+fun inputToDigitField(input: List<String>): DigitField {
+    val rows = input.size
+    val columns = input.firstOrNull()?.length ?: 0
+
+    val field = Array(rows) { IntArray(columns) }
+
+    input.forEachIndexed { row, line ->
+        line.forEachIndexed { column, character ->
+            field[row][column] = character.digitToInt()
+        }
+    }
+    return field
+}
+
 
 fun Field.println() {
     println(this.joinToString("\n") { it.joinToString("") })
