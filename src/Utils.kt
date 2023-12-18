@@ -26,6 +26,27 @@ fun Any?.println() = println(this)
 
 typealias Field = Array<CharArray>
 
+data class Position(val column: Int, val row: Int)
+
+enum class Dir(val deltaX: Int, val deltaY: Int) {
+    NORTH(deltaX = 0, deltaY = -1),
+    SOUTH(deltaX = 0, deltaY = 1),
+    EAST(deltaX = 1, deltaY = 0),
+    WEST(deltaX = -1, deltaY = 0),
+    ;
+
+    fun reverse() = when (this) {
+        NORTH -> SOUTH
+        SOUTH -> NORTH
+        EAST -> WEST
+        WEST -> EAST
+    }
+}
+
+fun Position.travel(direction: Dir, steps: Int = 1): Position =
+    copy(column = column + direction.deltaX * steps, row = row + direction.deltaY * steps)
+
+
 fun inputToField(input: List<String>): Field {
     val rows = input.size
     val columns = input.firstOrNull()?.length ?: 0
@@ -47,6 +68,13 @@ fun DigitField.elementAt(row: Int, column: Int): Int =
 
 fun DigitField.elementAt(position: Position): Int =
     elementAt(row = position.row, column = position.column)
+
+fun Field.elementAt(row: Int, column: Int): Char =
+    this[row][column]
+
+fun Field.elementAt(position: Position): Char =
+    elementAt(row = position.row, column = position.column)
+
 
 fun DigitField.isValidPosition(position: Position): Boolean =
     if (position.column < 0 || position.row < 0) {

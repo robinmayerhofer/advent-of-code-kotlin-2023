@@ -1,19 +1,6 @@
 import java.util.*
 
-private enum class Dir(val deltaX: Int, val deltaY: Int) {
-    NORTH(deltaX = 0, deltaY = -1),
-    SOUTH(deltaX = 0, deltaY = 1),
-    EAST(deltaX = -1, deltaY = 0),
-    WEST(deltaX = 1, deltaY = 0),
-    ;
 
-    fun reverse() = when (this) {
-        NORTH -> SOUTH
-        SOUTH -> NORTH
-        EAST -> WEST
-        WEST -> EAST
-    }
-}
 
 fun main() {
 
@@ -31,9 +18,6 @@ fun main() {
         override fun compareTo(other: CacheValue): Int =
             costUntilPreviousPosition - other.costUntilPreviousPosition
     }
-
-    fun Position.travel(direction: Dir): Position =
-        copy(column = column + direction.deltaX, row = row + direction.deltaY)
 
     fun dijkstraPart1(field: DigitField): Int {
         val priorityQueue = PriorityQueue<CacheValue>()

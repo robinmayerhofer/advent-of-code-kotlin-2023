@@ -20,8 +20,6 @@ private enum class Direction {
     }
 }
 
-data class Position(val column: Int, val row: Int)
-
 private data class TravelStep(
         val currentPosition: Position,
         val havingCameFrom: Direction,
