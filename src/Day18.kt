@@ -1,4 +1,4 @@
-
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -17,12 +17,21 @@ fun main() {
         val b: Vertex,
     ) : Comparable<Edge> {
 
+        val minRow = min(a.row, b.row)
+        val maxRow = max(a.row, b.row)
+        val minColumn = min(a.column, b.column)
+        val maxColumn = min(a.column, b.column)
+
         val isHorizontal: Boolean by lazy {
             a.row == b.row
         }
 
         val isVertical: Boolean by lazy {
             a.column == b.column
+        }
+
+        val length: Long by lazy {
+            abs(a.column - b.column).toLong() + abs(a.row - b.row).toLong() + 1
         }
 
         fun coversRow(row: Int): Boolean =
@@ -37,7 +46,7 @@ fun main() {
                     Vertex(column = c, row = a.row)
                 }
             } else if (isVertical) {
-                (min(a.row, b.row) .. max(a.row, b.row)).map { r ->
+                (min(a.row, b.row)..max(a.row, b.row)).map { r ->
                     Vertex(column = a.column, row = r)
                 }
             } else {
@@ -58,22 +67,35 @@ fun main() {
         }
 
         override fun compareTo(other: Edge): Int {
-            val rowDiff = a.row - b.row
+            val minColumnDiff = minColumn - other.minColumn
 
-            if (rowDiff != 0) {
-                return rowDiff
+            if (minColumnDiff != 0) {
+                return minColumnDiff
             }
-
-            return a.column - b.column
+            return if (isVertical) {
+                -1
+            } else {
+                1
+            }
         }
+
     }
+
 
     fun dirFromChar(char: Char): Dir = when (char) {
         'R' -> Dir.EAST
         'U' -> Dir.NORTH
         'L' -> Dir.WEST
         'D' -> Dir.SOUTH
-        else -> error("Unknown instruction.")
+        else -> error("Unknown instruction. $char")
+    }
+
+    fun dirFromInt(int: Int): Dir = when (int) {
+        0 -> Dir.EAST
+        1 -> Dir.SOUTH
+        2 -> Dir.WEST
+        3 -> Dir.NORTH
+        else -> error("Unknown instruction. $int")
     }
 
     fun buildEdgeSet(input: Day18Input): Set<Edge> {
@@ -121,8 +143,6 @@ fun main() {
     }
 
     fun evenOddWholeGrid(edges: Set<Edge>, vertices: Set<Vertex>): Int {
-        val minColumn = vertices.minOf { it.column }
-        val minRow = vertices.minOf { it.row }
         val maxColumn = vertices.maxOf { it.column }
         val maxRow = vertices.maxOf { it.row }
 
@@ -156,10 +176,12 @@ fun main() {
                             fieldCopy[position.row][position.column] = INSIDE
                         }
                     }
+
                     LINE -> {
                         insideCount += 1
                         fieldCopy[position.row][position.column] = INSIDE
-                        val shouldIncrease = relevantEdges.filter { it.coversColumn(c) }.any { it.countForHorizontalRayShootingForEvenOdd(r) }
+                        val shouldIncrease = relevantEdges.filter { it.coversColumn(c) }
+                            .any { it.countForHorizontalRayShootingForEvenOdd(r) }
                         if (shouldIncrease) {
                             evenOddCount += 1
                         }
@@ -174,6 +196,51 @@ fun main() {
         return insideCount
     }
 
+    fun evenOddWholeGridButBetter(edges: Set<Edge>, vertices: Set<Vertex>): Long {
+        val maxRow = vertices.maxOf { it.row }
+
+        var insideCount = 0L
+
+        // We are brute forcing the rows because the instance size is small enough.
+        // We could also be smarter about it and maybe skip to the next row with a vertex and store the ranges that
+        // are inside/outside and calculate the area of these rectangles?
+        // This works and is simpler :)
+        for (r in 0..maxRow) {
+//            if (r % max(1, (maxRow / 1000)) == 0) {
+//                println("0.1%!")
+//            }
+
+            var evenOddCount = 0
+            val relevantEdges = edges
+                .filter { it.coversRow(r) }
+                .sorted() // sprt by minColumn and vertical before horizontal
+
+            for (index in relevantEdges.indices) {
+                if (relevantEdges[index].countForHorizontalRayShootingForEvenOdd(r)) {
+                    evenOddCount += 1
+                }
+
+                if (relevantEdges[index].isVertical) {
+                    insideCount += 1
+                } else if (relevantEdges[index].isHorizontal) {
+                    insideCount += relevantEdges[index].length - 2  // remove 2 because both ends are counted by a vertical line
+                }
+
+                if (index < relevantEdges.size - 1) {
+                    val thisEdge = relevantEdges[index]
+                    val nextEdge = relevantEdges[index + 1]
+                    if (thisEdge.isVertical && nextEdge.isVertical) {
+                        if (evenOddCount % 2 == 1) {
+                            insideCount += (nextEdge.a.column - thisEdge.a.column - 1)
+                        }
+                    }
+                }
+            }
+        }
+
+        return insideCount
+    }
+
     fun part1(input: List<String>): Int {
         val instructions: List<Pair<Dir, Int>> = input.map { line ->
             val dirAndLength = line.split("(")[0]
@@ -183,17 +250,25 @@ fun main() {
             dirFromChar(dir) to length
         }
         val edges = shiftOriginToZeroZero(buildEdgeSet(instructions))
+        val vertices = buildVertexSet(edges)
+
+        return evenOddWholeGridButBetter(edges, vertices).toInt()
+    }
+
+    fun part2(input: List<String>): Long {
+        val instructions: List<Pair<Dir, Int>> = input.map { line ->
+            val x = line.split("(")[1].drop(1).dropLast(1)
+            val dir = x.last().digitToInt()
+            val length = x.dropLast(1).toInt(radix = 16)
+
+            dirFromInt(dir) to length
+        }
+        val edges = shiftOriginToZeroZero(buildEdgeSet(instructions))
         println(edges)
         val vertices = buildVertexSet(edges)
 
-
-        return evenOddWholeGrid(edges, vertices)
+        return evenOddWholeGridButBetter(edges, vertices)
     }
-
-    fun part2(input: List<String>): Int =
-        input.sumOf {
-            it.length
-        }
 
     testFile(
         "Part 1 Test 1",
@@ -204,14 +279,17 @@ fun main() {
     println("Passed Test")
 
     val input = readInput("Day18").filter(String::isNotBlank)
-    part1(input).println()
+    measure { part1(input) }
+        .also { check(it == 58550) { "Got $it, expected 58550" } }
+        .println()
 
-//    testFile(
-//        "Part 2 Test 1",
-//        "Day18_test",
-//        ::part2,
-//        1
-//    )
-//    val input2 = readInput("Day18_2").filter(String::isNotBlank)
-//    part2(input2).println()
+    testFile(
+        "Part 2 Test 1",
+        "Day18_test",
+        ::part2,
+        952_408_144_115L
+    )
+    val input2 = readInput("Day18").filter(String::isNotBlank)
+    measure { part2(input2) }
+        .println()
 }

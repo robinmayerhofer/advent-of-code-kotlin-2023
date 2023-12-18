@@ -141,7 +141,7 @@ fun <T> testFile(
     execute: (List<String>) -> T,
     expectedValue: T,
     filterBlank: Boolean = true
-) {
+) = measure {
     val testInput = readInput(fileName)
         .let {
             if (filterBlank) {
@@ -157,12 +157,13 @@ fun <T> testFile(
     }
 }
 
+
 fun <T> test(
     testName: String,
     multilineString: String,
     execute: (List<String>) -> T,
     expectedValue: T,
-) {
+) = measure {
     val testInput = multilineString.lines().filter(String::isNotBlank)
     val testOutput = execute(testInput)
     check(testOutput == expectedValue) {
