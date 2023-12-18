@@ -1,9 +1,6 @@
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
+import Polygon.Companion.buildVertexSet
 
-typealias Vertex = Position
-typealias Day18Input = List<Pair<Dir, Int>>
+typealias Day18Input = List<Pair<Direction, Int>>
 
 private const val LINE = '#'
 private const val INSIDE = '0'
@@ -11,96 +8,38 @@ private const val NOTHING = '.'
 
 fun main() {
 
-
-    data class Edge(
-        val a: Vertex,
-        val b: Vertex,
-    ) : Comparable<Edge> {
-
-        val minRow = min(a.row, b.row)
-        val maxRow = max(a.row, b.row)
-        val minColumn = min(a.column, b.column)
-        val maxColumn = min(a.column, b.column)
-
-        val isHorizontal: Boolean by lazy {
-            a.row == b.row
+    fun Edge.countForHorizontalRayShootingForEvenOdd(row: Int): Boolean {
+        if (!isVertical) {
+            return false
         }
 
-        val isVertical: Boolean by lazy {
-            a.column == b.column
+        if (!coversRow(row)) {
+            return false
         }
 
-        val length: Long by lazy {
-            abs(a.column - b.column).toLong() + abs(a.row - b.row).toLong() + 1
-        }
-
-        fun coversRow(row: Int): Boolean =
-            (a.row <= row && b.row >= row) || (b.row <= row && a.row >= row)
-
-        fun coversColumn(column: Int): Boolean =
-            (a.column <= column && b.column >= column) || (b.column <= column && a.column >= column)
-
-        fun coveredVertices(): Iterable<Vertex> =
-            if (isHorizontal) {
-                (min(a.column, b.column)..max(a.column, b.column)).map { c ->
-                    Vertex(column = c, row = a.row)
-                }
-            } else if (isVertical) {
-                (min(a.row, b.row)..max(a.row, b.row)).map { r ->
-                    Vertex(column = a.column, row = r)
-                }
-            } else {
-                error("Invalid edge")
-            }
-
-        fun countForHorizontalRayShootingForEvenOdd(row: Int): Boolean {
-            if (!isVertical) {
-                return false
-            }
-
-            if (!coversRow(row)) {
-                return false
-            }
-
-            // is on top
-            return a.row < row || b.row < row
-        }
-
-        override fun compareTo(other: Edge): Int {
-            val minColumnDiff = minColumn - other.minColumn
-
-            if (minColumnDiff != 0) {
-                return minColumnDiff
-            }
-            return if (isVertical) {
-                -1
-            } else {
-                1
-            }
-        }
-
+        // is on top
+        return a.row < row || b.row < row
     }
 
-
-    fun dirFromChar(char: Char): Dir = when (char) {
-        'R' -> Dir.EAST
-        'U' -> Dir.NORTH
-        'L' -> Dir.WEST
-        'D' -> Dir.SOUTH
+    fun dirFromChar(char: Char): Direction = when (char) {
+        'R' -> Direction.EAST
+        'D' -> Direction.SOUTH
+        'L' -> Direction.WEST
+        'U' -> Direction.NORTH
         else -> error("Unknown instruction. $char")
     }
 
-    fun dirFromInt(int: Int): Dir = when (int) {
-        0 -> Dir.EAST
-        1 -> Dir.SOUTH
-        2 -> Dir.WEST
-        3 -> Dir.NORTH
+    fun dirFromInt(int: Int): Direction = when (int) {
+        0 -> Direction.EAST
+        1 -> Direction.SOUTH
+        2 -> Direction.WEST
+        3 -> Direction.NORTH
         else -> error("Unknown instruction. $int")
     }
 
-    fun buildEdgeSet(input: Day18Input): Set<Edge> {
+    fun buildEdgeSet(input: Day18Input): List<Edge> {
         var current = Vertex(0, 0)
-        val edges = mutableSetOf<Edge>()
+        val edges = mutableListOf<Edge>()
 
         for ((direction, steps) in input) {
             val next = current.travel(direction, steps)
@@ -115,11 +54,7 @@ fun main() {
         return edges
     }
 
-    fun buildVertexSet(edges: Set<Edge>): Set<Vertex> =
-        edges.flatMap { listOf(it.a, it.b) }
-            .toSet()
-
-    fun shiftOriginToZeroZero(edges: Set<Edge>): Set<Edge> {
+    fun shiftOriginToZeroZero(edges: List<Edge>): List<Edge> {
         val vertices = buildVertexSet(edges)
 
         val minColumn = vertices.minOf { it.column }
@@ -139,7 +74,7 @@ fun main() {
                     row = edge.b.row + addToRows
                 )
             )
-        }.toSet()
+        }
     }
 
     fun evenOddWholeGrid(edges: Set<Edge>, vertices: Set<Vertex>): Int {
@@ -169,7 +104,7 @@ fun main() {
 
             for (c in 0..maxColumn) {
                 val position = Position(column = c, row = r)
-                when (field.elementAt(position)) {
+                when (field[position]) {
                     NOTHING -> {
                         if (evenOddCount % 2 == 1) {
                             insideCount += 1
@@ -242,30 +177,30 @@ fun main() {
     }
 
     fun part1(input: List<String>): Int {
-        val instructions: List<Pair<Dir, Int>> = input.map { line ->
+        val instructions: List<Pair<Direction, Int>> = input.map { line ->
             val dirAndLength = line.split("(")[0]
             val dir = dirAndLength[0]
             val length = dirAndLength.findAllNumbers()[0]
 
             dirFromChar(dir) to length
         }
-        val edges = shiftOriginToZeroZero(buildEdgeSet(instructions))
-        val vertices = buildVertexSet(edges)
+        val edges = shiftOriginToZeroZero(buildEdgeSet(instructions)).toSet()
+        val vertices = buildVertexSet(edges.toList()).toSet()
 
         return evenOddWholeGridButBetter(edges, vertices).toInt()
     }
 
     fun part2(input: List<String>): Long {
-        val instructions: List<Pair<Dir, Int>> = input.map { line ->
+        val instructions: List<Pair<Direction, Int>> = input.map { line ->
             val x = line.split("(")[1].drop(1).dropLast(1)
             val dir = x.last().digitToInt()
             val length = x.dropLast(1).toInt(radix = 16)
 
             dirFromInt(dir) to length
         }
-        val edges = shiftOriginToZeroZero(buildEdgeSet(instructions))
+        val edges = shiftOriginToZeroZero(buildEdgeSet(instructions)).toSet()
         println(edges)
-        val vertices = buildVertexSet(edges)
+        val vertices = buildVertexSet(edges.toList()).toSet()
 
         return evenOddWholeGridButBetter(edges, vertices)
     }

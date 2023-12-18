@@ -5,7 +5,7 @@ import java.util.*
 fun main() {
 
     data class LastDirection(
-        val dir: Dir,
+        val dir: Direction,
         val amount: Int
     )
 
@@ -21,7 +21,7 @@ fun main() {
 
     fun dijkstraPart1(field: DigitField): Int {
         val priorityQueue = PriorityQueue<CacheValue>()
-        val cache: MutableMap<Pair<Position, Dir>, CacheValue> = mutableMapOf()
+        val cache: MutableMap<Pair<Position, Direction>, CacheValue> = mutableMapOf()
 
         val startPosition = Position(
             row = 0,
@@ -50,7 +50,7 @@ fun main() {
                 continue
             }
 
-            val costOfPosition = field.elementAt(current.position)
+            val costOfPosition = field[current.position]
             if (current.position == endPosition) {
                 return current.costUntilPreviousPosition + costOfPosition
             }
@@ -77,7 +77,7 @@ fun main() {
                 forbiddenDirections.add(current.lastDirection.dir)
             }
 
-            for (direction in Dir.entries) {
+            for (direction in Direction.entries) {
                 if (direction in forbiddenDirections) {
                     continue
                 }
@@ -117,7 +117,7 @@ fun main() {
 
     fun dijkstraPart2(field: DigitField): Int {
         val priorityQueue = PriorityQueue<CacheValue>()
-        val cache: MutableMap<Pair<Position, Dir>, CacheValue> = mutableMapOf()
+        val cache: MutableMap<Pair<Position, Direction>, CacheValue> = mutableMapOf()
 
         val startPosition = Position(
             row = 0,
@@ -149,7 +149,7 @@ fun main() {
                 continue
             }
 
-            val costOfPosition = field.elementAt(current.position)
+            val costOfPosition = field[current.position]
             if (current.position == endPosition && (current.lastDirection?.amount ?: 0) >= 4) {
                 println("Found path to end:")
                 current.printPath()
@@ -177,7 +177,7 @@ fun main() {
             }
 
 
-            val allowedDirections = mutableSetOf<Dir>()
+            val allowedDirections = mutableSetOf<Direction>()
             if (current.lastDirection != null) {
                 if (current.lastDirection.amount < 10) {
                     allowedDirections.add(current.lastDirection.dir)
@@ -185,13 +185,13 @@ fun main() {
 
                 if (current.lastDirection.amount >= 4) {
                     allowedDirections.addAll(
-                        Dir.entries
+                        Direction.entries
                             .toList()
                             .filter { it != current.lastDirection.dir && it != current.lastDirection.dir.reverse() }
                     )
                 }
             } else {
-                allowedDirections.addAll(Dir.entries.toList())
+                allowedDirections.addAll(Direction.entries.toList())
             }
 
             for (direction in allowedDirections) {

@@ -1,7 +1,7 @@
-import Direction.*
+import DirectionDay10.*
 import kotlin.math.ceil
 
-private enum class Direction {
+private enum class DirectionDay10 {
     NORTH,
     EAST,
     SOUTH,
@@ -21,15 +21,15 @@ private enum class Direction {
 }
 
 private data class TravelStep(
-        val currentPosition: Position,
-        val havingCameFrom: Direction,
+    val currentPosition: Position,
+    val havingCameFrom: DirectionDay10,
 )
 
 private data class Pipe(
-        val backingChar: Char,
-        val from: Direction,
-        val to: Direction,
-        val floodFillColor: Int? = null,
+    val backingChar: Char,
+    val from: DirectionDay10,
+    val to: DirectionDay10,
+    val floodFillColor: Int? = null,
 ) {
     companion object {
         fun from(char: Char): Pipe = when (char) {
@@ -79,7 +79,7 @@ fun main() {
     fun PipeField.elementAt(position: Position): Pipe =
             elementAt(row = position.row, column = position.column)
 
-    fun Position.travel(direction: Direction): Position =
+    fun Position.travel(direction: DirectionDay10): Position =
             when (direction) {
                 NORTH -> Position(column = column, row = row - 1)
                 EAST -> Position(column = column + 1, row = row)
@@ -124,8 +124,8 @@ fun main() {
     }
 
     fun PipeField.next(
-            currentTravelStep: TravelStep,
-            forcedDirection: Direction? = null,
+        currentTravelStep: TravelStep,
+        forcedDirection: DirectionDay10? = null,
     ): TravelStep? {
         if (forcedDirection != null) {
             check(elementAt(currentTravelStep.currentPosition).isStart()) {
@@ -250,7 +250,7 @@ fun main() {
         return newField
     }
 
-    fun Position.directionTo(other: Position): Direction =
+    fun Position.directionTo(other: Position): DirectionDay10 =
             if (row < other.row) SOUTH
             else if (row > other.row) NORTH
             else if (column < other.column) EAST
