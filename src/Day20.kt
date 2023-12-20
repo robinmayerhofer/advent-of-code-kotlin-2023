@@ -84,8 +84,6 @@ private enum class GateType(val regex: Regex) {
 
 
 fun main() {
-    shouldLog = true
-
     fun parsePart1Input(input: List<String>): Map<GateName, Gate> {
         val rawGates = input.map { line ->
             val (gate, outputs) = line.split("->").map(String::trim)
@@ -121,7 +119,7 @@ fun main() {
         val impulse: Impulse,
     )
 
-    fun pushButton(gateNamesToGates: Map<GateName, Gate>): Pair<Long, Long> {
+    fun pushButtonPart1(gateNamesToGates: Map<GateName, Gate>): Pair<Long, Long> {
         log { "Button pushed" }
 
         val broadcaster = gateNamesToGates[BROADCASTER_NAME] ?: error("Found no '$BROADCASTER_NAME'")
@@ -161,12 +159,48 @@ fun main() {
         return Pair(lowImpulses, highImpulses)
     }
 
+    fun pushButtonPart2(gateNamesToGates: Map<GateName, Gate>): Boolean {
+        log { "Button pushed" }
+
+        val broadcaster = gateNamesToGates[BROADCASTER_NAME] ?: error("Found no '$BROADCASTER_NAME'")
+
+        val initialSignals: List<Signal> = broadcaster.outputs
+            .map { output -> Signal(fromGate = BROADCASTER_NAME, toGate = output, impulse = LOW) }
+
+        val deque: ArrayDeque<Signal> = ArrayDeque(initialSignals)
+
+
+        while (deque.isNotEmpty()) {
+            val signal = deque.removeFirst()
+            log { "Handling $signal" }
+
+            if (signal.toGate == "rx" && signal.impulse == LOW) {
+                return true
+            }
+//            else if (signal.toGate == "rx") {
+//                println("Found rx but with high pulse")
+//            }
+
+            val gate = gateNamesToGates[signal.toGate] ?: DoNothing(name = signal.toGate)
+            val newImpulse = gate.process(signal.fromGate, signal.impulse)
+            if (newImpulse != null) {
+                deque.addAll(
+                    gate.outputs.map { output ->
+                        Signal(fromGate = gate.name, toGate = output, impulse = newImpulse)
+                    }
+                )
+            }
+        }
+
+        return false
+    }
+
     fun part1(input: List<String>): Long {
         val gateNamesToGates = parsePart1Input(input)
         log { gateNamesToGates }
 
         val result = (1..1000)
-            .map { pushButton(gateNamesToGates) }
+            .map { pushButtonPart1(gateNamesToGates) }
             .fold(Pair(0L, 0L)) { acc, element ->
                 (acc.first + element.first) to (acc.second + element.second)
             }
@@ -174,10 +208,22 @@ fun main() {
         return result.first * result.second
     }
 
-    fun part2(input: List<String>): Int =
-        input.sumOf {
-            it.length
+    fun part2(input: List<String>): Long {
+        val gateNamesToGates = parsePart1Input(input)
+        log { gateNamesToGates }
+
+        var buttonPushes = 0
+        while (true) {
+            if (buttonPushes % 1_000_000 == 0) {
+                println("$buttonPushes button pushes")
+            }
+            buttonPushes += 1
+            val reachedEnd = pushButtonPart2(gateNamesToGates)
+            if (reachedEnd) {
+                return buttonPushes.toLong()
+            }
         }
+    }
 
     val inverter = Conjunction(
         name = "inv",
@@ -201,13 +247,14 @@ fun main() {
     val input = readInput("Day20").filter(String::isNotBlank)
     part1(input).println()
 
-    testFile(
-        "Part 2 Test 1",
-        "Day20_test",
-        ::part2,
-        1,
-        filterBlank = true,
-    )
+//    testFile(
+//        "Part 2 Test 1",
+//        "Day20_test",
+//        ::part2,
+//        1,
+//        filterBlank = true,
+//    )
+    shouldLog = false
     val input2 = readInput("Day20").filter(String::isNotBlank)
     part2(input2).println()
 }
