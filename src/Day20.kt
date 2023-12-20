@@ -159,7 +159,7 @@ fun main() {
         return Pair(lowImpulses, highImpulses)
     }
 
-    fun pushButtonPart2(gateNamesToGates: Map<GateName, Gate>): Boolean {
+    fun pushButtonPart2(gateNamesToGates: Map<GateName, Gate>, buttonPush: Int): Boolean {
         log { "Button pushed" }
 
         val broadcaster = gateNamesToGates[BROADCASTER_NAME] ?: error("Found no '$BROADCASTER_NAME'")
@@ -169,17 +169,18 @@ fun main() {
 
         val deque: ArrayDeque<Signal> = ArrayDeque(initialSignals)
 
-
         while (deque.isNotEmpty()) {
             val signal = deque.removeFirst()
             log { "Handling $signal" }
 
-            if (signal.toGate == "rx" && signal.impulse == LOW) {
+            if (signal.fromGate =="tg" && signal.toGate == "rx" && signal.impulse == LOW) {
                 return true
             }
-//            else if (signal.toGate == "rx") {
-//                println("Found rx but with high pulse")
-//            }
+
+            // "db", "ln", "vq", "tf"
+            if (signal.fromGate == "tf" && signal.toGate == "tg" && signal.impulse == HIGH) {
+                println("HIGH to ln in button push #$buttonPush: $signal")
+            }
 
             val gate = gateNamesToGates[signal.toGate] ?: DoNothing(name = signal.toGate)
             val newImpulse = gate.process(signal.fromGate, signal.impulse)
@@ -213,16 +214,18 @@ fun main() {
         log { gateNamesToGates }
 
         var buttonPushes = 0
-        while (true) {
+        repeat(20_000) { step ->
             if (buttonPushes % 1_000_000 == 0) {
                 println("$buttonPushes button pushes")
             }
             buttonPushes += 1
-            val reachedEnd = pushButtonPart2(gateNamesToGates)
+            val reachedEnd = pushButtonPart2(gateNamesToGates, buttonPushes)
             if (reachedEnd) {
                 return buttonPushes.toLong()
             }
         }
+
+        return buttonPushes.toLong()
     }
 
     val inverter = Conjunction(
@@ -247,14 +250,35 @@ fun main() {
     val input = readInput("Day20").filter(String::isNotBlank)
     part1(input).println()
 
-//    testFile(
-//        "Part 2 Test 1",
-//        "Day20_test",
-//        ::part2,
-//        1,
-//        filterBlank = true,
-//    )
     shouldLog = false
     val input2 = readInput("Day20").filter(String::isNotBlank)
+    // Input has end at rx, which has the "&tg" before it with 4 inputs
+    // tg needs to get 4 high inputs so that it sends out a LOW signal to rx
+    // each of the 4 inputs gets high periodically (run 20-100k steps and observe when a HIGH is sent from each of the 4 previous steps to tg)
+    // all the cycle lengths are primes, multiply them and get the answer
+
+    // the cycle length can also be visually observed because the structures are counters with a reset
+    // when all inputs for the "NAND" (called "conjunction" in the puzzle are true we send "low"
+    // then we have an inverter for each reset NAND that hits a NAND "tg"
+    // then "tg" hits "rx" => when the counters are reset at the same time we get a low impulse to "rx"
+
+    // for example, one circle starts at "km" directly after the broadcaster
+    // it goes "km -> dr -> kg -> lv -> jc -> qr -> dk -> vj -> ps -> xf -> bd -> gg"
+    //          0     1     2     3     4     5     6     7     8     9     10    11
+    // km hits tp => 2^0
+    // dr does not => 0
+    // kg does not => 0
+    // lv does => 2^3
+    // jc does => 2^4
+    // qr does not => 0
+    // dk does => 2^6
+    // vj does not => 0
+    // ps does => 2^8
+    // xf does not => 2^9
+    // bd does not => 2^10
+    // gg does not => 2^11
+    // in total: 11101011001 => 3929. Cycle length 1
+    // the cycle lengths are: 3929, 4091, 4007, 3923 => 252.667.369.442.479
+
     part2(input2).println()
 }

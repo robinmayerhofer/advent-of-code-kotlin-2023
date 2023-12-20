@@ -1,0 +1,89 @@
+digraph G {
+  button -> broadcaster;
+  button [shape=Mdiamond];
+
+  broadcaster -> km, lr, xh, rf
+
+  subgraph cluster_cycle_0 {
+    vd -> lf, nb, cx, hx, lr
+
+    lr -> vd, vg
+    vg -> lf, vd
+    lf -> nb
+    nb -> cg
+    cg -> vd, hx
+    hx -> sb
+    sb -> vd, cx
+    cx -> gp
+    gp -> vd, sj
+    sj -> rm, vd
+    rm -> st, vd
+    st -> vd
+  }
+
+  subgraph cluster_cycle_1 {
+    pt -> rf, cm, jx, rg
+
+    rf -> pt, dj
+    dj -> pt, gc
+    gc -> cm, pt
+    cm -> rg
+    rg -> sd
+    sd -> pt, jx
+    jx -> cn
+    cn -> mv, pt
+    mv -> pt, hq
+    hq -> fl, pt
+    fl -> pt, sk
+    sk -> pt
+  }
+
+  subgraph cluster_cycle_2 {
+    tp -> dr, km, kg, vj, qr
+
+    km -> tp, dr
+    dr -> kg
+    kg -> lv
+    lv -> jc, tp
+    jc -> tp, qr
+    qr -> dk
+    dk -> tp, vj
+    vj -> ps
+    ps -> xf, tp
+    xf -> bd, tp
+    bd -> tp, gg
+    gg -> tp
+  }
+
+  subgraph cluster_cycle_3 {
+    bk -> xh, zx
+
+    xh -> bk, ql
+    ql -> bk, zx
+    zx -> rq
+    rq -> bk, gr
+    gr -> bk, mn
+    mn -> jh, bk
+    jh -> lm, bk
+    lm -> tr, bk
+    tr -> bk, vp
+    vp -> lp, bk
+    lp -> jt, bk
+    jt -> bk
+  }
+
+  subgraph cluster_4 {
+    rx [shape=Mdiamond];
+    tg
+    pt -> vq
+    tp -> db
+    vd -> tf
+    bk -> ln
+
+    ln -> tg
+    db -> tg
+    vq -> tg
+    tf -> tg
+    tg -> rx
+  }
+}
