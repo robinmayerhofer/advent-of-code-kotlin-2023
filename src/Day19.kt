@@ -211,6 +211,7 @@ fun main() {
         currentName: WorkflowName,
         ranges: Map<Char, IntRange>,
     ): Long {
+        // This is some sort of "hypercube splitting"
         if (ranges.hasNoSolutions()) {
             log { "${depth.toDashes()} Considering $currentName: ranges are empty" }
             return 0

@@ -1,7 +1,5 @@
 import java.util.*
 
-
-
 fun main() {
 
     data class LastDirection(

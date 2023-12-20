@@ -3,7 +3,7 @@ var shouldLog = false
 fun Any?.log() = log(this)
 
 @JvmName("logAny")
-fun log(message: Any? = null) {
+fun log(message: Any? = "") {
     if (shouldLog) {
         println(message)
     }
