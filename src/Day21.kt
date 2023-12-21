@@ -66,38 +66,56 @@ fun main() {
         var onWhenEven = 1L
         var onWhenOdd = 0L
 
+        val countsAtDepth: MutableList<Long> = mutableListOf(onWhenEven)
+
         while (depth <= maxDepth) {
-            println("Depth: $depth")
-            val recentlyVisitedPositions: Set<Position> = map.values.flatten().toSet()
+            measure {
+                println("Depth: $depth")
 
-            map[depth] = map[depth - 1]!!.flatMap { position: Position ->
-                Direction.entries.mapNotNull { direction ->
-                    val newPosition = position.travel(direction)
-                    if (field.isNotARockOnInfiniteField(newPosition)) {
-                        if (recentlyVisitedPositions.contains(newPosition)) {
-                            null
+                map[depth] = map[depth - 1]!!.flatMap { position: Position ->
+                    Direction.entries.mapNotNull { direction ->
+                        val newPosition = position.travel(direction)
+                        if (field.isNotARockOnInfiniteField(newPosition)) {
+                            if (map.values.any { it.contains(newPosition) }) {
+                                null
+                            } else {
+                                newPosition
+                            }
                         } else {
-                            newPosition
+                            null
                         }
-                    } else {
-                        null
                     }
-                }
-            }.toSet()
+                }.toSet()
 
-            if (depth % 2 == 0) {
-                onWhenEven += map[depth]!!.size
-            } else {
-                onWhenOdd += map[depth]!!.size
-            }
+                if (depth % 2 == 0) {
+                    onWhenEven += map[depth]!!.size
+                    countsAtDepth.add(onWhenEven)
+                } else {
+                    onWhenOdd += map[depth]!!.size
+                    countsAtDepth.add(onWhenOdd)
+                }
 
 //            println("$depth => ${map[depth]!!.size}")
 //            println("$depth => Diff: ${map[depth]!!.size - (map[depth-1]?.size ?: 0)}")
 
-            if (depth >= 10) {
-                map.remove(depth - 10)
+                if (depth >= 2) {
+                    map.remove(depth - 2)
+                }
+                depth += 1
             }
-            depth += 1
+        }
+
+        countsAtDepth.forEachIndexed { index: Int, count: Long ->
+            val diffToPrevious = if (index > 1) {
+                count - countsAtDepth[index - 1]
+            } else { 0 }
+            val diffToPreviousMinusTwo = if (index > 2) {
+                count - countsAtDepth[index - 2]
+            } else { 0 }
+
+            if (depth % 2 == 1) {
+                println("Depth $index: count to previous odd: $diffToPreviousMinusTwo)")
+            }
         }
 
         return if (maxDepth % 2 == 0L) {
@@ -161,5 +179,7 @@ fun main() {
         { part2(it, steps = 5000) }, 16733044,
     )
 //    val input2 = readInput("Day21").filter(String::isNotBlank)
-//    part2(input2).println()
+//    measure { part2(input2, steps = 5000) }
+//    measure { part2(input2, steps = 26501365) }
+//        .println()
 }
