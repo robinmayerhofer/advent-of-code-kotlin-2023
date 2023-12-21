@@ -14,11 +14,32 @@ fun inputToField(input: List<String>): Field {
     return field
 }
 
+fun Field.isValidPosition(position: Position): Boolean =
+    if (position.column < 0 || position.row < 0) {
+        false
+    } else if (position.column >= this[0].size || position.row >= this.size) {
+        false
+    } else {
+        true
+    }
+
+
 operator fun Field.get(position: Position) =
     this[position.row][position.column]
 
 fun Field.get(row: Int, column: Int) =
     this[row][column]
+
+fun Field.find(matches: (Char) -> Boolean): Position {
+    for (r in indices) {
+        for (c in this[r].indices) {
+            if (matches(get(row = r, column = c))) {
+                return Position(column = c, row = r)
+            }
+        }
+    }
+    error("Not found.")
+}
 
 operator fun Field.set(position: Position, newValue: Char) {
     this[position.row][position.column] = newValue
@@ -75,6 +96,14 @@ fun rotate90(field: Field): Field {
         }
     }
 }
+
+fun Field.deepCopy(): Field =
+    Field(size) { r ->
+        CharArray(this[0].size) { c ->
+            this[r][c]
+        }
+    }
+
 
 fun Field.println() {
     println(this.joinToString("\n") { it.joinToString("") })
