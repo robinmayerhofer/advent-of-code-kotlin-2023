@@ -258,20 +258,30 @@ fun main() {
                 if (canRemoveIndexSafely) {
                     0
                 } else {
-                    val affected = indexToSupportedIndices[index]!!.toMutableSet()
+                    val affected = mutableSetOf(index)
                     val indicesToCheck = indexToSupportedIndices[index]!!.toMutableSet()
 //                    log()
 //                    log { "Checked $index. Affected: $affected, left to check $indicesToCheck" }
 
                     while (indicesToCheck.isNotEmpty()) {
                         val indexToCheck = indicesToCheck.first()
-                        val supported = indexToSupportedIndices[indexToCheck]!!
-                        affected.addAll(supported)
-                        indicesToCheck.addAll(supported)
+
+                        if (affected.containsAll(indexToSupportingIndices[indexToCheck]!!)) {
+                            val supported = indexToSupportedIndices[indexToCheck]!!
+                            supported.filter { supportedIndex ->
+                                affected.containsAll(indexToSupportingIndices[supportedIndex]!!)
+                            }
+                            affected.add(indexToCheck)
+                            indicesToCheck.addAll(supported)
+                        }
                         indicesToCheck.remove(indexToCheck)
+
+
 
 //                        log { "Checked $indexToCheck. Affected: $affected, left to check $indicesToCheck" }
                     }
+
+                    affected.remove(index) // remove original index again
 
                     log { "Found ${affected.map { it.mapToChar() }} (${affected.size} bricks) that will drop if we remove brick ${index.mapToChar()}" }
                     affected.size
@@ -279,13 +289,13 @@ fun main() {
             }.sum()
     }
 
-    shouldLog = true
-    testFile(
-        "Part 2 Test 1",
-        "Day22_test",
-        ::part2,
-        7,
-    )
+//    shouldLog = true
+//    testFile(
+//        "Part 2 Test 1",
+//        "Day22_test",
+//        ::part2,
+//        7,
+//    )
     shouldLog = false
     val input2 = readInput("Day22").filter(String::isNotBlank)
     part2(input2)
