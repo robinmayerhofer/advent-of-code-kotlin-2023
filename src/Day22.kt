@@ -85,8 +85,8 @@ fun main() {
             .map(String::toBrick)
             .sorted()
 
-        println("Found bricks")
-        givenSortedBricks.forEach(::println)
+        log("Found bricks")
+        givenSortedBricks.forEach(::log)
 
         val droppedBricks = mutableListOf<Brick>()
         val minZ = 0 // ground is 0
@@ -95,7 +95,7 @@ fun main() {
             val otherZ: Int = droppedBricks.filter { brick.intersectsXY(it) }.maxOfOrNull { it.zRange.last } ?: minZ
 
             val zDrop = brick.zRange.first - otherZ - 1
-            println("zDrop: $zDrop")
+            log("zDrop: $zDrop")
             droppedBricks.add(
                 element = Brick(
                     start = brick.start.copy(z = brick.start.z - zDrop),
@@ -103,9 +103,8 @@ fun main() {
                 )
             )
         }
-        println("Dropped bricks")
-//        droppedBricks.sort()
-        droppedBricks.forEach(::println)
+        log("Dropped bricks")
+        droppedBricks.forEach(::log)
 
         // highest droppedBrick is at the end
         val indexToSupportedIndices: Map<Int, List<Int>> = droppedBricks.mapIndexed { index, brick ->
@@ -136,22 +135,24 @@ fun main() {
             }
         }
 
-        println()
+        log()
         indexToSupportedIndices.forEach {
-            println("${it.key} is supporting ${it.value}")
+            log("${it.key} is supporting ${it.value}")
         }
 
-        println()
+        log()
         indexToSupportingIndices.forEach {
-            println("${it.key} is supported by ${it.value}")
+            log("${it.key} is supported by ${it.value}")
         }
 
         droppedBricks.zip(canRemove).forEach {
-            println("Can remove ${it.first}? ${it.second}")
+            log("Can remove ${it.first}? ${it.second}")
         }
 
         return canRemove.count { it }
     }
+
+    shouldLog = true
 
     val a = Brick(start = Position3D(x = 1, y = 1, z = 5), end = Position3D(x = 1, y = 1, z = 6))
     val b = Brick(start = Position3D(x = 0, y = 1, z = 4), end = Position3D(x = 2, y = 1, z = 4))
@@ -163,7 +164,6 @@ fun main() {
     check(!(1..1).intersects(0..0))
     check(!(1..1).intersects(2..2))
 
-    shouldLog = true
     testFile(
         "Part 1 Test 1",
         "Day22_test",
@@ -171,22 +171,124 @@ fun main() {
         5,
     )
 
+    shouldLog = false
     val input = readInput("Day22").filter(String::isNotBlank)
     part1(input)
         .also { check(it == 416) }
-        .println()
+        .log()
 
-//    fun part2(input: List<String>): Int =
-//        input.sumOf {
-//            it.length
-//        }
-//
-//    testFile(
-//        "Part 2 Test 1",
-//        "Day22_test",
-//        ::part2,
-//        1,
-//    )
-//    val input2 = readInput("Day22").filter(String::isNotBlank)
-//    part2(input2).println()
+
+    fun Int.mapToChar() =
+        Char(this + 'A'.code)
+
+    check(0.mapToChar() == 'A')
+
+    fun part2(input: List<String>): Int {
+        val givenSortedBricks = input
+            .map(String::toBrick)
+            .sorted()
+
+        log("Found bricks")
+        givenSortedBricks.forEach(::log)
+
+        val droppedBricks = mutableListOf<Brick>()
+        val minZ = 0 // ground is 0
+
+        for (brick in givenSortedBricks) {
+            val otherZ: Int = droppedBricks.filter { brick.intersectsXY(it) }.maxOfOrNull { it.zRange.last } ?: minZ
+
+            val zDrop = brick.zRange.first - otherZ - 1
+            log("zDrop: $zDrop")
+            droppedBricks.add(
+                element = Brick(
+                    start = brick.start.copy(z = brick.start.z - zDrop),
+                    end = brick.end.copy(z = brick.end.z - zDrop),
+                )
+            )
+        }
+        log("Dropped bricks")
+        droppedBricks.sort()
+        droppedBricks.forEach(::log)
+
+        // highest droppedBrick is at the end
+        val indexToSupportedIndices: Map<Int, List<Int>> = droppedBricks.mapIndexed { index, brick ->
+            index to droppedBricks.mapIndexedNotNull { otherIndex, otherBrick ->
+                if (brick.supports(otherBrick)) {
+                    otherIndex
+                } else {
+                    null
+                }
+            }
+        }.toMap()
+
+        val canRemove = MutableList(droppedBricks.size) { true }
+
+        val indexToSupportingIndices =
+            indexToSupportedIndices.entries.fold(mutableMapOf()) { acc: MutableMap<Int, MutableSet<Int>>, (supportingIndex: Int, supportedIndices: List<Int>) ->
+                supportedIndices.forEach { supportedIndex ->
+                    val supportedBySet = acc.getOrDefault(supportedIndex, mutableSetOf())
+                    supportedBySet.add(supportingIndex)
+                    acc[supportedIndex] = supportedBySet
+                }
+                acc
+            }
+
+        indexToSupportingIndices.values.forEach { supportingIndices ->
+            if (supportingIndices.size == 1) {
+                canRemove[supportingIndices.first()] = false
+            }
+        }
+
+        log()
+        indexToSupportedIndices.forEach {
+            log("${it.key} is supporting ${it.value}")
+        }
+
+        log()
+        indexToSupportingIndices.forEach {
+            log("${it.key} is supported by ${it.value}")
+        }
+
+        droppedBricks.zip(canRemove).forEach {
+            log("Can remove ${it.first}? ${it.second}")
+        }
+
+        return canRemove
+            .mapIndexed { index, canRemoveIndexSafely ->
+                if (canRemoveIndexSafely) {
+                    0
+                } else {
+                    val affected = indexToSupportedIndices[index]!!.toMutableSet()
+                    val indicesToCheck = indexToSupportedIndices[index]!!.toMutableSet()
+//                    log()
+//                    log { "Checked $index. Affected: $affected, left to check $indicesToCheck" }
+
+                    while (indicesToCheck.isNotEmpty()) {
+                        val indexToCheck = indicesToCheck.first()
+                        val supported = indexToSupportedIndices[indexToCheck]!!
+                        affected.addAll(supported)
+                        indicesToCheck.addAll(supported)
+                        indicesToCheck.remove(indexToCheck)
+
+//                        log { "Checked $indexToCheck. Affected: $affected, left to check $indicesToCheck" }
+                    }
+
+                    log { "Found ${affected.map { it.mapToChar() }} (${affected.size} bricks) that will drop if we remove brick ${index.mapToChar()}" }
+                    affected.size
+                }
+            }.sum()
+    }
+
+    shouldLog = true
+    testFile(
+        "Part 2 Test 1",
+        "Day22_test",
+        ::part2,
+        7,
+    )
+    shouldLog = false
+    val input2 = readInput("Day22").filter(String::isNotBlank)
+    part2(input2)
+        .also { check(it < 89108) { "Too high. $it should be < 89108." } }
+        .println()
 }
