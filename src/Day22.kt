@@ -26,15 +26,14 @@ fun main() {
             b
         }
 
-    fun IntRange.intersects(other: IntRange): Boolean {
+    fun IntRange.intersects(other: IntRange): Boolean =
         if (this.first >= other.first && this.first <= other.last) {
-            return true
+            true
         } else if (other.first >= this.first && other.first <= this.last) {
-            return true
+            true
         } else {
-            return false
+            false
         }
-    }
 
     data class Brick(
         val start: Position3D,
@@ -53,7 +52,7 @@ fun main() {
             xRange.intersects(other.xRange) && yRange.intersects(other.yRange) && zRange.intersects(other.zRange)
 
         fun supports(other: Brick): Boolean =
-            if (zRange.first == other.zRange.last - 1) {
+            if (zRange.last == other.zRange.first - 1) {
                 intersectsXY(other)
             } else {
                 false
@@ -118,9 +117,9 @@ fun main() {
 
         // highest droppedBrick is at the start
         val indexToSupportedIndices: Map<Int, List<Int>> = droppedBricks.mapIndexed { index, brick ->
-            index to droppedBricks.take(index).mapIndexedNotNull { index, other ->
+            index to droppedBricks.take(index).mapIndexedNotNull { otherIndex, other ->
                 if (brick.supports(other)) {
-                    index
+                    otherIndex
                 } else {
                     null
                 }
@@ -145,6 +144,20 @@ fun main() {
             }
         }
 
+        println()
+        indexToSupportedIndices.forEach {
+            println("${it.key} is supporting by ${it.value}")
+        }
+
+        println()
+        indexToSupportingIndices.forEach {
+            println("${it.key} is supported by ${it.value}")
+        }
+
+        droppedBricks.zip(canRemove).forEach {
+            println("Can remove ${it.first}? ${it.second}")
+        }
+
         return canRemove.count { it }
     }
 
@@ -152,6 +165,11 @@ fun main() {
         input.sumOf {
             it.length
         }
+
+    val a = Brick(start = Position3D(x = 1, y = 1, z = 5), end = Position3D(x = 1, y = 1, z = 6))
+    val b = Brick(start = Position3D(x = 0, y = 1, z = 4), end = Position3D(x = 2, y = 1, z = 4))
+
+    check(b.supports(a))
 
     shouldLog = true
     testFile(
@@ -161,8 +179,10 @@ fun main() {
         5,
     )
 
-    val input = readInput("Day22").filter(String::isNotBlank)
-    part1(input).println()
+//    val input = readInput("Day22").filter(String::isNotBlank)
+//    part1(input)
+//        .also { check(it < 437) { "Too high. Expected $it < 437." } }
+//        .println()
 
 //    testFile(
 //        "Part 2 Test 1",
