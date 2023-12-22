@@ -47,10 +47,6 @@ fun main() {
         fun intersectsXY(other: Brick): Boolean =
             xRange.intersects(other.xRange) && yRange.intersects(other.yRange)
 
-
-        fun intersects(other: Brick): Boolean =
-            xRange.intersects(other.xRange) && yRange.intersects(other.yRange) && zRange.intersects(other.zRange)
-
         fun supports(other: Brick): Boolean =
             if (zRange.last == other.zRange.first - 1) {
                 intersectsXY(other)
@@ -90,22 +86,17 @@ fun main() {
             .sorted()
 
         println("Found bricks")
-        givenSortedBricks.asReversed().forEach(::println)
+        givenSortedBricks.forEach(::println)
 
         val droppedBricks = mutableListOf<Brick>()
-        val minZ = 1
+        val minZ = 0 // ground is 0
 
         for (brick in givenSortedBricks) {
-            val blockingBrick = droppedBricks.firstOrNull { it.intersectsXY(brick) }
+            val otherZ: Int = droppedBricks.filter { brick.intersectsXY(it) }.maxOfOrNull { it.zRange.last } ?: minZ
 
-            val zDrop = if (blockingBrick == null) {
-                brick.zRange.first - minZ
-            } else {
-                brick.zRange.first - blockingBrick.zRange.last - 1
-            }
+            val zDrop = brick.zRange.first - otherZ - 1
             println("zDrop: $zDrop")
             droppedBricks.add(
-                index = 0,
                 element = Brick(
                     start = brick.start.copy(z = brick.start.z - zDrop),
                     end = brick.end.copy(z = brick.end.z - zDrop),
@@ -113,12 +104,12 @@ fun main() {
             )
         }
         println("Dropped bricks")
-        droppedBricks.sortDescending()
+//        droppedBricks.sort()
         droppedBricks.forEach(::println)
 
-        // highest droppedBrick is at the start
+        // highest droppedBrick is at the end
         val indexToSupportedIndices: Map<Int, List<Int>> = droppedBricks.mapIndexed { index, brick ->
-            index to droppedBricks.take(index).mapIndexedNotNull { otherIndex, otherBrick ->
+            index to droppedBricks.mapIndexedNotNull { otherIndex, otherBrick ->
                 if (brick.supports(otherBrick)) {
                     otherIndex
                 } else {
@@ -165,6 +156,12 @@ fun main() {
     val a = Brick(start = Position3D(x = 1, y = 1, z = 5), end = Position3D(x = 1, y = 1, z = 6))
     val b = Brick(start = Position3D(x = 0, y = 1, z = 4), end = Position3D(x = 2, y = 1, z = 4))
     check(b.supports(a))
+    check((1..3).intersects(2..4))
+    check((1..3).intersects(1..1))
+    check((1..1).intersects(1..3))
+    check((1..1).intersects(0..3))
+    check(!(1..1).intersects(0..0))
+    check(!(1..1).intersects(2..2))
 
     shouldLog = true
     testFile(
@@ -174,10 +171,10 @@ fun main() {
         5,
     )
 
-//    val input = readInput("Day22").filter(String::isNotBlank)
-//    part1(input)
-//        .also { check(it < 437) { "Too high. Expected $it < 437." } }
-//        .println()
+    val input = readInput("Day22").filter(String::isNotBlank)
+    part1(input)
+        .also { check(it == 416) }
+        .println()
 
 //    fun part2(input: List<String>): Int =
 //        input.sumOf {
