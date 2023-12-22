@@ -221,7 +221,7 @@ fun main() {
             }
         }.toMap()
 
-        val canRemove = MutableList(droppedBricks.size) { true }
+        val canRemoveList = MutableList(droppedBricks.size) { true }
 
         val indexToSupportingIndices =
             indexToSupportedIndices.entries.fold(mutableMapOf()) { acc: MutableMap<Int, MutableSet<Int>>, (supportingIndex: Int, supportedIndices: List<Int>) ->
@@ -235,7 +235,7 @@ fun main() {
 
         indexToSupportingIndices.values.forEach { supportingIndices ->
             if (supportingIndices.size == 1) {
-                canRemove[supportingIndices.first()] = false
+                canRemoveList[supportingIndices.first()] = false
             }
         }
 
@@ -249,11 +249,11 @@ fun main() {
             log("${it.key} is supported by ${it.value}")
         }
 
-        droppedBricks.zip(canRemove).forEach {
+        droppedBricks.zip(canRemoveList).forEach {
             log("Can remove ${it.first}? ${it.second}")
         }
 
-        return canRemove
+        return canRemoveList
             .mapIndexed { index, canRemoveIndexSafely ->
                 if (canRemoveIndexSafely) {
                     0
@@ -267,12 +267,8 @@ fun main() {
                         val indexToCheck = indicesToCheck.first()
 
                         if (affected.containsAll(indexToSupportingIndices[indexToCheck]!!)) {
-                            val supported = indexToSupportedIndices[indexToCheck]!!
-                            supported.filter { supportedIndex ->
-                                affected.containsAll(indexToSupportingIndices[supportedIndex]!!)
-                            }
                             affected.add(indexToCheck)
-                            indicesToCheck.addAll(supported)
+                            indicesToCheck.addAll(indexToSupportedIndices[indexToCheck]!!)
                         }
                         indicesToCheck.remove(indexToCheck)
 
