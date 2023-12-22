@@ -113,12 +113,13 @@ fun main() {
             )
         }
         println("Dropped bricks")
+        droppedBricks.sortDescending()
         droppedBricks.forEach(::println)
 
         // highest droppedBrick is at the start
         val indexToSupportedIndices: Map<Int, List<Int>> = droppedBricks.mapIndexed { index, brick ->
-            index to droppedBricks.take(index).mapIndexedNotNull { otherIndex, other ->
-                if (brick.supports(other)) {
+            index to droppedBricks.take(index).mapIndexedNotNull { otherIndex, otherBrick ->
+                if (brick.supports(otherBrick)) {
                     otherIndex
                 } else {
                     null
@@ -146,7 +147,7 @@ fun main() {
 
         println()
         indexToSupportedIndices.forEach {
-            println("${it.key} is supporting by ${it.value}")
+            println("${it.key} is supporting ${it.value}")
         }
 
         println()
@@ -161,14 +162,8 @@ fun main() {
         return canRemove.count { it }
     }
 
-    fun part2(input: List<String>): Int =
-        input.sumOf {
-            it.length
-        }
-
     val a = Brick(start = Position3D(x = 1, y = 1, z = 5), end = Position3D(x = 1, y = 1, z = 6))
     val b = Brick(start = Position3D(x = 0, y = 1, z = 4), end = Position3D(x = 2, y = 1, z = 4))
-
     check(b.supports(a))
 
     shouldLog = true
@@ -184,6 +179,11 @@ fun main() {
 //        .also { check(it < 437) { "Too high. Expected $it < 437." } }
 //        .println()
 
+//    fun part2(input: List<String>): Int =
+//        input.sumOf {
+//            it.length
+//        }
+//
 //    testFile(
 //        "Part 2 Test 1",
 //        "Day22_test",
