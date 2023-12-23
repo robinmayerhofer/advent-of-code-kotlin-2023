@@ -1,4 +1,5 @@
 import Polygon.Companion.buildVertexSet
+import kotlin.math.max
 
 typealias Day18Input = List<Pair<Direction, Int>>
 
@@ -141,14 +142,14 @@ fun main() {
         // are inside/outside and calculate the area of these rectangles?
         // This works and is simpler :)
         for (r in 0..maxRow) {
-//            if (r % max(1, (maxRow / 1000)) == 0) {
-//                println("0.1%!")
-//            }
+            if (r % max(1, (maxRow / 25)) == 0) {
+                println("4%!")
+            }
 
             var evenOddCount = 0
             val relevantEdges = edges
                 .filter { it.coversRow(r) }
-                .sorted() // sprt by minColumn and vertical before horizontal
+                .sorted() // sort by minColumn and vertical before horizontal
 
             for (index in relevantEdges.indices) {
                 if (relevantEdges[index].countForHorizontalRayShootingForEvenOdd(r)) {
@@ -158,7 +159,7 @@ fun main() {
                 if (relevantEdges[index].isVertical) {
                     insideCount += 1
                 } else if (relevantEdges[index].isHorizontal) {
-                    insideCount += relevantEdges[index].length - 2  // remove 2 because both ends are counted by a vertical line
+                    insideCount += relevantEdges[index].length - 1  // remove 2 because both ends are counted by a vertical line
                 }
 
                 if (index < relevantEdges.size - 1) {
@@ -226,5 +227,6 @@ fun main() {
     )
     val input2 = readInput("Day18").filter(String::isNotBlank)
     measure { part2(input2) }
+        .also { check(it == 47452118468566) { "Got $it, expected 952408144115" } }
         .println()
 }

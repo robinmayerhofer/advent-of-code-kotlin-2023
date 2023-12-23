@@ -5,6 +5,7 @@ import kotlin.math.min
 data class Edge(
     val a: Vertex,
     val b: Vertex,
+    val customLength: Int? = null,
 ) : Comparable<Edge> {
 
     val minRow by lazy { min(a.row, b.row) }
@@ -20,8 +21,9 @@ data class Edge(
         a.column == b.column
     }
 
-    val length: Long by lazy {
-        abs(a.column - b.column).toLong() + abs(a.row - b.row).toLong() + 1
+    val length: Int by lazy {
+        customLength
+            ?: (abs(a.column - b.column) + abs(a.row - b.row))
     }
 
     fun coversRow(row: Int): Boolean =
@@ -50,22 +52,27 @@ data class Edge(
         if (minColumnDiff != 0) {
             return minColumnDiff
         }
-        return if (isVertical) {
+        return if (isVertical && other.isVertical) {
+            minRow - other.minRow
+        } else if (isVertical) {
             -1
+        } else if (other.isVertical) {
+            +1
         } else {
-            1
+            minRow - other.minRow
         }
     }
 }
 
 typealias Vertex = Position
+
 class Polygon(
     val edges: List<Edge>,
     val vertices: List<Vertex>
 ) {
 
     init {
-        check(isPolygon()) { "That ain't a polygon."}
+        check(isPolygon()) { "That ain't a polygon." }
     }
 
     constructor(edges: List<Edge>) : this(edges, buildVertexSet(edges))
@@ -80,8 +87,12 @@ class Polygon(
      * Complexity: O(E)
      */
     private fun isPolygon(): Boolean {
-        if (edges.size < 3) { return false }
-        if (edges.first().a != edges.last().b) { return false }
+        if (edges.size < 3) {
+            return false
+        }
+        if (edges.first().a != edges.last().b) {
+            return false
+        }
 
         return edges.zip(edges.drop(1)).all { (current, next) ->
             current.b == next.a
@@ -125,8 +136,7 @@ class Polygon(
     /**
      * Complexity: O(E)
      */
-    val perimeter: Long by lazy {
-        edges.sumOf { it.length - 1 } - 1
+    val perimeter: Int by lazy {
+        edges.sumOf { it.length } - 1
     }
-
 }
