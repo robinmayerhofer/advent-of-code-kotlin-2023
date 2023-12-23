@@ -12,7 +12,7 @@ fun main() {
 
     fun longestPath(
         field: Field,
-        alreadyVisited: Set<Position>,
+        alreadyVisited: MutableMap<Position, Boolean>,
         current: Position,
         end: Position,
     ): Int? {
@@ -23,19 +23,21 @@ fun main() {
                 0
             } else if (!field.isValidPosition(current)) {
                 null
-            } else if (new in alreadyVisited) {
+            } else if (alreadyVisited[new] == true) {
                 null
             } else {
                 val element = field[current]
                 if (element == FOREST) {
                     null
                 } else if (element == PATH || slopeToDirection[element] == direction) {
+                    alreadyVisited[current] = true
                     val longestPath = longestPath(
                         field = field,
-                        alreadyVisited = alreadyVisited + current,
+                        alreadyVisited = alreadyVisited,
                         current = new,
                         end = end,
                     )
+                    alreadyVisited[current] = false
                     if (longestPath == null) {
                         null
                     } else {
@@ -54,7 +56,7 @@ fun main() {
         val end = Position(row = field.size - 1, column = field[0].size - 2)
         return longestPath(
             field = field,
-            alreadyVisited = emptySet(),
+            alreadyVisited = mutableMapOf(),
             current = start,
             end = end,
         )!!
@@ -171,7 +173,6 @@ fun main() {
 
         require(start in verticesToEdges)
         require(end in verticesToEdges)
-
 
         return longestPathGraph(
             graph = verticesToEdges,
