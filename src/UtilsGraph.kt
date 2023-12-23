@@ -2,11 +2,11 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-data class Edge(
+data class UndirectedEdge(
     val a: Vertex,
     val b: Vertex,
     val customLength: Int? = null,
-) : Comparable<Edge> {
+) : Comparable<UndirectedEdge> {
 
     val minRow by lazy { min(a.row, b.row) }
     val maxRow by lazy { max(a.row, b.row) }
@@ -45,8 +45,10 @@ data class Edge(
             error("Invalid edge")
         }
 
+
     // sort by minColumn then vertical edges before others
-    override fun compareTo(other: Edge): Int {
+    // TODO: make this work for arbitrary edges => extract into standalone comparator
+    override fun compareTo(other: UndirectedEdge): Int {
         val minColumnDiff = minColumn - other.minColumn
 
         if (minColumnDiff != 0) {
@@ -62,12 +64,113 @@ data class Edge(
             minRow - other.minRow
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as UndirectedEdge
+
+        if (customLength != other.customLength) return false
+        if (minRow != other.minRow) return false
+        if (maxRow != other.maxRow) return false
+        if (minColumn != other.minColumn) return false
+        if (maxColumn != other.maxColumn) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = customLength ?: 0
+        result = 31 * result + minRow
+        result = 31 * result + maxRow
+        result = 31 * result + minColumn
+        result = 31 * result + maxColumn
+        return result
+    }
+}
+
+data class Graph(
+    val edges: Set<UndirectedEdge>,
+    val vertices: Set<Vertex> = edges.flatMap { listOf(it.a, it.b) }.toSet(),
+) {
+    val vertexToEdges: MutableMap<Position, MutableList<UndirectedEdge>> by lazy {
+        computeVertexToEdgesMap()
+    }
+
+    private fun computeVertexToEdgesMap(): MutableMap<Position, MutableList<UndirectedEdge>> =
+        edges.fold(mutableMapOf()) { acc, edge ->
+            acc.putIfAbsent(edge.a, mutableListOf())
+            acc.putIfAbsent(edge.b, mutableListOf())
+            acc[edge.a]!!.add(edge)
+            acc[edge.b]!!.add(edge)
+            acc
+        }
+
+    fun pruningEdges(): Graph {
+        val vertexToEdges: MutableMap<Position, MutableList<UndirectedEdge>> = computeVertexToEdgesMap()
+
+        while (true) {
+            val (prunableVertex, prunableEdges) = vertexToEdges.entries
+                .firstOrNull { it.value.size == 2 }
+                ?: break
+
+            val other: Vertex = (setOf(prunableEdges[0].a, prunableEdges[0].b) - prunableVertex).first()
+            val other2: Vertex = (setOf(prunableEdges[1].a, prunableEdges[1].b) - prunableVertex).first()
+
+            val totalLength = prunableEdges[0].length + prunableEdges[1].length
+            val replacementEdge = UndirectedEdge(a = other, b = other2, customLength = totalLength)
+
+            check(vertexToEdges.remove(prunableVertex) != null)
+            require(vertexToEdges[other]!!.remove(prunableEdges[0]))
+            require(vertexToEdges[other2]!!.remove(prunableEdges[1]))
+
+            vertexToEdges[other]!!.add(replacementEdge)
+            vertexToEdges[other2]!!.add(replacementEdge)
+        }
+
+        return Graph(edges = vertexToEdges.values.flatten().toSet(), vertices = vertexToEdges.keys)
+    }
+
+    /**
+     * Brute-force. In general, longest path is an NP-hard problem.
+     */
+    fun longestPath(
+        alreadyVisited: MutableMap<Position, Boolean> = mutableMapOf(),
+        current: Position,
+        end: Position,
+    ): Int? {
+        return if (current == end) {
+            0
+        } else if (alreadyVisited[current] == true) {
+            null
+        } else {
+            val edges: List<UndirectedEdge> = vertexToEdges[current]!!
+            edges.mapNotNull { edge ->
+                require(current == edge.a || current == edge.b)
+                alreadyVisited[current] = true
+                val pathLength = longestPath(
+                    alreadyVisited = alreadyVisited,
+                    current = (setOf(edge.a, edge.b) - current).first(),
+                    end = end
+                )
+                alreadyVisited[current] = false
+
+                if (pathLength == null) {
+                    null
+                } else {
+                    pathLength + edge.customLength!!
+                }
+            }.maxOrNull()
+        }
+    }
+
 }
 
 typealias Vertex = Position
 
-class Polygon(
-    val edges: List<Edge>,
+data class Polygon(
+    val edges: List<UndirectedEdge>,
     val vertices: List<Vertex>
 ) {
 
@@ -75,11 +178,11 @@ class Polygon(
         check(isPolygon()) { "That ain't a polygon." }
     }
 
-    constructor(edges: List<Edge>) : this(edges, buildVertexSet(edges))
+    constructor(edges: List<UndirectedEdge>) : this(edges, buildVertexSet(edges))
 
 
     companion object {
-        fun buildVertexSet(edges: List<Edge>): List<Vertex> =
+        fun buildVertexSet(edges: List<UndirectedEdge>): List<Vertex> =
             edges.map { it.a }
     }
 

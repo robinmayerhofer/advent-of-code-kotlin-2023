@@ -9,7 +9,7 @@ private const val NOTHING = '.'
 
 fun main() {
 
-    fun Edge.countForHorizontalRayShootingForEvenOdd(row: Int): Boolean {
+    fun UndirectedEdge.countForHorizontalRayShootingForEvenOdd(row: Int): Boolean {
         if (!isVertical) {
             return false
         }
@@ -38,14 +38,14 @@ fun main() {
         else -> error("Unknown instruction. $int")
     }
 
-    fun buildEdgeSet(input: Day18Input): List<Edge> {
+    fun buildEdgeSet(input: Day18Input): List<UndirectedEdge> {
         var current = Vertex(0, 0)
-        val edges = mutableListOf<Edge>()
+        val edges = mutableListOf<UndirectedEdge>()
 
         for ((direction, steps) in input) {
             val next = current.travel(direction, steps)
             edges.add(
-                Edge(
+                UndirectedEdge(
                     a = current,
                     b = next
                 )
@@ -55,7 +55,7 @@ fun main() {
         return edges
     }
 
-    fun shiftOriginToZeroZero(edges: List<Edge>): List<Edge> {
+    fun shiftOriginToZeroZero(edges: List<UndirectedEdge>): List<UndirectedEdge> {
         val vertices = buildVertexSet(edges)
 
         val minColumn = vertices.minOf { it.column }
@@ -65,7 +65,7 @@ fun main() {
         val addToRows = 0 - minRow
 
         return edges.map { edge ->
-            Edge(
+            UndirectedEdge(
                 a = edge.a.copy(
                     column = edge.a.column + addToColumns,
                     row = edge.a.row + addToRows
@@ -78,7 +78,7 @@ fun main() {
         }
     }
 
-    fun evenOddWholeGrid(edges: Set<Edge>, vertices: Set<Vertex>): Int {
+    fun evenOddWholeGrid(edges: Set<UndirectedEdge>, vertices: Set<Vertex>): Int {
         val maxColumn = vertices.maxOf { it.column }
         val maxRow = vertices.maxOf { it.row }
 
@@ -132,7 +132,7 @@ fun main() {
         return insideCount
     }
 
-    fun evenOddWholeGridButBetter(edges: Set<Edge>, vertices: Set<Vertex>): Long {
+    fun evenOddWholeGridButBetter(edges: Set<UndirectedEdge>, vertices: Set<Vertex>): Long {
         val maxRow = vertices.maxOf { it.row }
 
         var insideCount = 0L

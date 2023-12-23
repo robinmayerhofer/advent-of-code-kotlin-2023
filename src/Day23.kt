@@ -62,77 +62,6 @@ fun main() {
         )!!
     }
 
-    fun longestPathGraph(
-        graph: Map<Position, List<Edge>>,
-        alreadyVisited: MutableMap<Position, Boolean>,
-        current: Position,
-        end: Position,
-    ): Int? {
-        return if (current == end) {
-            0
-        } else if (alreadyVisited[current] == true) {
-            null
-        } else {
-            val edges: List<Edge> = graph[current]!!
-            edges.mapNotNull { edge ->
-                require(current == edge.a)
-                alreadyVisited[edge.a] = true
-                val pathLength = longestPathGraph(
-                    graph = graph,
-                    alreadyVisited = alreadyVisited,
-                    current = edge.b,
-                    end = end
-                )
-                alreadyVisited[edge.a] = false
-
-                if (pathLength == null) {
-                    null
-                } else {
-                    pathLength + edge.customLength!!
-                }
-            }.maxOrNull()
-        }
-    }
-
-    fun pruneEdges(
-        edges: Set<Edge>,
-        start: Position,
-        end: Position,
-    ): Map<Position, List<Edge>> {
-
-        val vertexToEdges: MutableMap<Position, MutableList<Edge>> = edges.fold(mutableMapOf()) { acc, edge ->
-            acc.putIfAbsent(edge.a, mutableListOf())
-            acc[edge.a]!!.add(edge)
-            acc
-        }
-
-        while (true) {
-            val (prunableVertex, prunableEdges) = vertexToEdges.entries
-                .firstOrNull { it.value.size == 2 }
-                ?: break
-
-            require(prunableVertex !in setOf(start, end))
-
-            val other = prunableEdges[0].b
-            val other2 = prunableEdges[1].b
-
-            val totalLength = prunableEdges[0].customLength!! + prunableEdges[1].customLength!!
-
-            vertexToEdges.remove(prunableVertex)
-            require(
-                vertexToEdges[other]!!.remove(Edge(a = other, b = prunableVertex, customLength = prunableEdges[0].customLength))
-            )
-            require(
-                vertexToEdges[other2]!!.remove(Edge(a = other2, b = prunableVertex, customLength = prunableEdges[1].customLength))
-            )
-
-            vertexToEdges[other]!!.add(Edge(a = other, b = other2, customLength = totalLength))
-            vertexToEdges[other2]!!.add(Edge(a = other2, b = other, customLength = totalLength))
-        }
-
-        return vertexToEdges
-    }
-
     fun part2(input: List<String>): Int {
         val field = inputToField(input)
             .map { row ->
@@ -147,36 +76,31 @@ fun main() {
         val start = Position(row = 0, column = 1)
         val end = Position(row = field.size - 1, column = field[0].size - 2)
 
-        val edges: Set<Edge> = field.flatMapIndexed { row: Int, line: CharArray ->
+        val rawGraph: Graph = field.flatMapIndexed { row: Int, line: CharArray ->
             line.flatMapIndexed { column, char ->
                 val position = Position(row = row, column = column)
 
                 Direction.entries.map { direction ->
-                    Edge(a = position, b = position.travel(direction), customLength = 1)
+                    UndirectedEdge(a = position, b = position.travel(direction), customLength = 1)
                 }.filter { edge ->
                     field.isValidPosition(edge.a) && field.isValidPosition(edge.b) && field[edge.a] == PATH && field[edge.b] == PATH
                 }
             }
-        }.toSet()
+        }.let {
+            Graph(edges = it.toSet())
+        }
 
-        println("Edges (${edges.size})")
-        log { edges }
+        println("Edges (${rawGraph.edges.size})")
+        log { rawGraph.edges }
 
-        val verticesToEdges: Map<Position, List<Edge>> = pruneEdges(
-            edges = edges,
-            start = start,
-            end = end
-        )
-        val prunedEdges = verticesToEdges.values.flatten()
-        println("Pruned Edges (${prunedEdges.size})")
-        log { prunedEdges.joinToString("\n") }
+        val graph: Graph = rawGraph.pruningEdges()
+        println("Pruned Edges (${graph.edges.size})")
+        log { graph.edges.joinToString("\n") }
 
-        require(start in verticesToEdges)
-        require(end in verticesToEdges)
+        require(start in graph.vertices)
+        require(end in graph.vertices)
 
-        return longestPathGraph(
-            graph = verticesToEdges,
-            alreadyVisited = mutableMapOf(),
+        return graph.longestPath(
             current = start,
             end = end,
         )!!
