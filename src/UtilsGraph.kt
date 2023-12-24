@@ -26,6 +26,15 @@ data class UndirectedEdge(
             ?: (abs(a.column - b.column) + abs(a.row - b.row))
     }
 
+    fun otherVertex(vertex: Vertex): Vertex {
+        require(vertex == a || vertex == b)
+        return if (vertex == a) {
+            b
+        } else {
+            a
+        }
+    }
+
     fun coversRow(row: Int): Boolean =
         (a.row <= row && b.row >= row) || (b.row <= row && a.row >= row)
 
@@ -115,8 +124,8 @@ data class Graph(
                 .firstOrNull { it.value.size == 2 }
                 ?: break
 
-            val other: Vertex = (setOf(prunableEdges[0].a, prunableEdges[0].b) - prunableVertex).first()
-            val other2: Vertex = (setOf(prunableEdges[1].a, prunableEdges[1].b) - prunableVertex).first()
+            val other: Vertex = prunableEdges[0].otherVertex(prunableVertex)
+            val other2: Vertex = prunableEdges[1].otherVertex(prunableVertex)
 
             val totalLength = prunableEdges[0].length + prunableEdges[1].length
             val replacementEdge = UndirectedEdge(a = other, b = other2, customLength = totalLength)
@@ -151,7 +160,7 @@ data class Graph(
                 alreadyVisited[current] = true
                 val pathLength = longestPath(
                     alreadyVisited = alreadyVisited,
-                    current = (setOf(edge.a, edge.b) - current).first(),
+                    current = edge.otherVertex(current),
                     end = end
                 )
                 alreadyVisited[current] = false
