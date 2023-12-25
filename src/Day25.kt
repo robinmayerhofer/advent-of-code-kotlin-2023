@@ -1,34 +1,29 @@
+import org.jgrapht.alg.StoerWagnerMinimumCut
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
+
 fun main() {
     shouldLog = true
 
-    fun part1(input: List<String>): Int =
-        input.sumOf {
-            it.length
+    fun part1(input: List<String>): Int {
+        val graph = SimpleWeightedGraph<String, DefaultWeightedEdge>(DefaultWeightedEdge::class.java)
+
+        input.forEach { line ->
+            val (name, others) = line.split(": ")
+
+            graph.addVertex(name)
+
+            others.split(" ").forEach { other ->
+                graph.addVertex(other)
+                graph.addEdge(name, other)
+            }
         }
 
-    fun part2(input: List<String>): Int =
-        input.sumOf {
-            it.length
-        }
-
-    testFile(
-        "Part 1 Test 1",
-        "Day25_test",
-        ::part1,
-        1,
-        filterBlank = false,
-    )
+        val oneSide = StoerWagnerMinimumCut(graph).minCut()
+        return (graph.vertexSet().size - oneSide.size) * oneSide.size
+    }
 
     val input = readInput("Day25").filter(String::isNotBlank)
-    part1(input).println()
-
-    testFile(
-        "Part 2 Test 1",
-        "Day25_test",
-        ::part2,
-        1,
-        filterBlank = false,
-    )
-    val input2 = readInput("Day25").filter(String::isNotBlank)
-    part2(input2).println()
+    measure { part1(input) }
+        .println()
 }
